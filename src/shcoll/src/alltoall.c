@@ -109,6 +109,136 @@ void shcoll_set_alltoall_round_sync(int rounds_sync) {
     shcoll_barrier_binomial_tree(PE_start, logPE_stride, PE_size, pSync);      \
   }
 
+  inline static void alltoall_helper_xor_pairwise_exchange_barrier( // actually xor algorithm (logarithmic)
+      void *dest, const void *source, size_t nelems, int PE_start,
+      int logPE_stride, int PE_size, long *pSync) {
+    const int stride = 1 << logPE_stride;
+    const int me = shmem_my_pe();
+
+    /* Get my index in the active set */
+    const int me_as = (me - PE_start) / stride;
+    void *dest_ptr;
+    void *source_ptr;
+
+    memcpy(dest, source, nelems * PE_size);
+    int peer_as, distance, offset;
+
+    for (int k = 0; (1 << k) < PE_size; k ++){
+      distance = 1 << k;
+      peer_as = me_as ^ distance;
+
+      offset = (me_as & distance) ? 0 : 1;
+
+      for (int i = 0; i < (PE_size >> (k + 1)); i++){
+        dest_ptr = ((uint8_t *) dest) + (offset * distance * nelems) + i * 2 * distance * nelems; // really the source in this case
+        source_ptr = ((uint8_t *) source) + i * 2 * distance * nelems;
+        //printf("me_as: %d, k = %d, i = %d, dst offset: %d, src offset: %d\n", me_as, k, i, (offset * distance * nelems) + i * 2 * distance * nelems, i * 2 * distance * nelems);
+        shmem_putmem_nbi(source_ptr, dest_ptr, nelems * distance, PE_start + peer_as * stride);
+      }
+
+      //shcoll_barrier_binomial_tree(PE_start, logPE_stride, PE_size, pSync);
+      shmem_quiet();
+
+      for (int i = 0; i < (PE_size >> (k + 1)); i++){
+        dest_ptr = ((uint8_t *) dest) + (offset * distance * nelems) + i * 2 * distance * nelems;;
+        source_ptr = ((uint8_t *) source) + i * 2 * distance * nelems;
+        memcpy(dest_ptr, source_ptr, nelems * distance);
+      }
+    }
+
+    /* TODO: change to auto shcoll barrier */
+    shcoll_barrier_binomial_tree(PE_start, logPE_stride, PE_size, pSync);
+  }
+
+// inline static void alltoall_helper_xor_pairwise_exchange_barrier( // actually Bruck algorithm
+//       void *dest, const void *source, size_t nelems, int PE_start,
+//       int logPE_stride, int PE_size, long *pSync) {
+//     const int stride = 1 << logPE_stride;
+//     const int me = shmem_my_pe();
+
+//     /* Get my index in the active set */
+//     const int me_as = (me - PE_start) / stride;
+//     void const *dest_ptr;
+//     void const *source_ptr;
+
+//     int peer_as, distance;
+//     /* ensure power of 2 PE count */
+//     assert(((PE_size - 1) & PE_size) == 0);
+//     //memcpy(dest, source, nelems * PE_size);
+
+//     for (int i = 0; i < PE_size; i ++){
+
+//       source_ptr = ((uint8_t *) source) + ((me_as + i) % PE_size) * nelems;
+//       dest_ptr = ((uint8_t *) dest) + i * nelems;
+//       if (me_as == 1){
+//         printf("%d coppied from %p to %p\n", *((int *) source_ptr), source_ptr, dest_ptr);
+//       }
+//       memcpy(dest_ptr, source_ptr, nelems);
+//     }
+
+//     if (me_as == 1){
+//       printf("PE 1 start:");
+//       for (int i = 0; i < PE_size; i ++){
+//         printf("%d, ", *((int *)dest + i));
+//       }
+//       printf("\n\n\n");
+//     }
+
+//     for (int k = 0; (1 << k) < PE_size; k++) { // iterate log2(N) times - might not work from non 2^i number of processing elements
+//       distance = (1 << k); // also the size of the sending?
+//       peer_as = (me_as + distance) % PE_size; // according to Bruck algorithm
+
+      
+//       for (int i = 0; i < PE_size; i ++){
+//         if (distance & i){
+//           // send data
+//           source_ptr = ((uint8_t *) source) + i * nelems;
+//           dest_ptr = ((uint8_t *) dest) + i * nelems;
+
+//           shmem_putmem_nbi(source_ptr, dest_ptr, nelems,
+//                         PE_start + peer_as * stride);
+//         }
+//       }
+
+//       if (me_as == 1){
+//         printf("PE 0 round %d: ", k);
+//         for (int i = 0; i < PE_size; i ++){
+//           printf("%d, ", *((int *)dest + i));
+//         }
+//         printf("\n\n\n");
+//       }
+
+//       shcoll_barrier_binomial_tree(PE_start, logPE_stride, PE_size, pSync); //barrier just for fun
+      
+//       for (int i = 0; i < PE_size; i ++){
+//         if (distance && i){
+//           // copy from source to dst array
+//           source_ptr = ((uint8_t *) source) + i * nelems;
+//           dest_ptr = ((uint8_t *) dest) + i * nelems;
+//           memcpy(dest_ptr, source_ptr, nelems);
+//         }
+//       }
+
+//       shcoll_barrier_binomial_tree(PE_start, logPE_stride, PE_size, pSync); // barrier just for fun
+
+//     }
+
+//     for (int i = 0; i < PE_size; i ++){
+//       source_ptr = ((uint8_t *) source) + i * nelems;
+//       dest_ptr = ((uint8_t *) dest) + i * nelems;
+//       memcpy(source_ptr, dest_ptr, nelems);
+//     }
+
+//     for (int i = 0; i < PE_size; i ++){
+//       source_ptr = ((uint8_t *) source) + i * nelems;
+//       dest_ptr = ((uint8_t *) dest) + (me_as + PE_size - i ) % PE_size;
+//       memcpy(dest_ptr, source_ptr, nelems);
+//     }
+
+//     /* TODO: change to auto shcoll barrier */
+//     shcoll_barrier_binomial_tree(PE_start, logPE_stride, PE_size, pSync);
+//   }
+
 /**
  * @brief Helper macro to define counter-based alltoall implementations
  *
@@ -213,7 +343,7 @@ ALLTOALL_HELPER_SIGNAL_DEFINITION(shift_exchange, SHIFT_PEER,
 #define XOR_PEER(I, ME, NPES) ((I) ^ (ME))
 #define XOR_COND (((PE_size - 1) & PE_size) == 0)
 
-ALLTOALL_HELPER_BARRIER_DEFINITION(xor_pairwise_exchange, XOR_PEER, XOR_COND)
+// ALLTOALL_HELPER_BARRIER_DEFINITION(xor_pairwise_exchange, XOR_PEER, XOR_COND)
 ALLTOALL_HELPER_COUNTER_DEFINITION(xor_pairwise_exchange, XOR_PEER, XOR_COND)
 ALLTOALL_HELPER_SIGNAL_DEFINITION(xor_pairwise_exchange, XOR_PEER,
                                   XOR_COND &&PE_size - 1 <=
