@@ -79,6 +79,7 @@ LT_INIT
 
 m4_include([config/m4/pmix.m4])
 m4_include([config/m4/ucx.m4])
+m4_include([config/m4/ucc.m4])
 m4_include([config/m4/shcoll.m4])
 
 m4_include([config/m4/confargs.m4])
@@ -228,6 +229,7 @@ echo "  Default heap size: $shmem_heap_size"
 echo "     Install prefix: $prefix"
 echo
 echo "                UCX: version $UCX_VERSION_STRING"
+echo "                UCC: version $UCC_VERSION_STRING"
 echo "               PMIx: version $PMIX_VERSION_STRING"
 
 case "x$shcoll_happy" in

@@ -25,6 +25,11 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <ucc/api/ucc.h>
+#include <ucc/api/ucc_version.h>
+#include <ucc/api/ucc_status.h>
+#include <ucc/api/ucc_def.h>
+
 
 /**
  * @brief Calculate edge color for color pairwise exchange algorithm
@@ -201,6 +206,30 @@ void shcoll_set_alltoall_round_sync(int rounds_sync) {
   }
 
 // @formatter:off
+inline static void alltoall_helper_xor_pairwise_exchange_barrier(
+      void *dest, const void *source, size_t nelems, int PE_start,
+      int logPE_stride, int PE_size, long *pSync) {
+
+    ucc_lib_h lib;
+    ucc_lib_params_t lib_params = {
+            .mask = UCC_LIB_PARAM_FIELD_THREAD_MODE | UCC_LIB_PARAM_FIELD_SYNC_TYPE,
+            .thread_mode = UCC_THREAD_SINGLE, /* will have to align with OpenSHMEM in future */
+            .sync_type = UCC_NO_SYNC_COLLECTIVES
+            };
+
+    ucc_lib_config_h lib_config;
+    ucc_lib_config_read(NULL, NULL, &lib_config);
+
+    //start ucc
+    ucc_init(&lib_params, lib_config, &lib);
+    
+
+
+
+
+
+    ucc_finalize(lib);
+}
 
 /** @brief Peer calculation for shift exchange algorithm */
 #define SHIFT_PEER(I, ME, NPES) (((ME) + (I)) % (NPES))
@@ -213,7 +242,7 @@ ALLTOALL_HELPER_SIGNAL_DEFINITION(shift_exchange, SHIFT_PEER,
 #define XOR_PEER(I, ME, NPES) ((I) ^ (ME))
 #define XOR_COND (((PE_size - 1) & PE_size) == 0)
 
-ALLTOALL_HELPER_BARRIER_DEFINITION(xor_pairwise_exchange, XOR_PEER, XOR_COND)
+//ALLTOALL_HELPER_BARRIER_DEFINITION(xor_pairwise_exchange, XOR_PEER, XOR_COND)
 ALLTOALL_HELPER_COUNTER_DEFINITION(xor_pairwise_exchange, XOR_PEER, XOR_COND)
 ALLTOALL_HELPER_SIGNAL_DEFINITION(xor_pairwise_exchange, XOR_PEER,
                                   XOR_COND &&PE_size - 1 <=
