@@ -31,6 +31,7 @@
 #include <ucc/api/ucc_def.h>
 
 
+
 /**
  * @brief Calculate edge color for color pairwise exchange algorithm
  *
@@ -205,6 +206,76 @@ void shcoll_set_alltoall_round_sync(int rounds_sync) {
     }                                                                          \
   }
 
+#include <shmem.h>
+#include <ucc/api/ucc.h>
+#include <stdlib.h>
+
+typedef struct {
+    int rank;
+    int size;
+    long *sync_counter; // Symmetric memory pointer
+} ucc_shmem_oob_info_t;
+
+typedef struct {
+    ucc_shmem_oob_info_t *info;
+    int                   is_done;
+} oob_request_t;
+
+ucc_status_t ucc_oob_all_gather(void *sbuf, void *rbuf, size_t msglen,
+                                void *coll_info, void **req)
+{
+    ucc_shmem_oob_info_t *info = (ucc_shmem_oob_info_t *)coll_info;
+    
+    // We need symmetric memory for OpenSHMEM OOB to work.
+    // UCC provides 'sbuf' and 'rbuf' which are NOT symmetric.
+    void *sym_sbuf = shmem_malloc(msglen);
+    void *sym_rbuf = shmem_malloc(msglen * info->size);
+
+    // 1. Copy UCC's private data to symmetric memory
+    memcpy(sym_sbuf, sbuf, msglen);
+    shmem_barrier_all();
+
+    // 2. Perform the Put-based Allgather (as written before)
+    for (int i = 0; i < info->size; i++) {
+        void *dest = (char*)sym_rbuf + (info->rank * msglen);
+        shmem_putmem(dest, sym_sbuf, msglen, i);
+    }
+    shmem_quiet();
+
+    // 3. Signal completion
+    for (int i = 0; i < info->size; i++) {
+        shmem_atomic_inc(info->sync_counter, i);
+    }
+
+    // 4. Wait for completion locally
+    while(shmem_atomic_fetch(info->sync_counter, info->rank) < info->size) {
+        // poll
+    }
+
+    // 5. Copy data back to UCC's provided rbuf
+    memcpy(rbuf, sym_rbuf, msglen * info->size);
+
+    shmem_free(sym_sbuf);
+    shmem_free(sym_rbuf);
+
+    // Since we did this synchronously for the baseline, return a dummy req
+    *req = (void*)0xDEADBEEF; 
+    return UCC_OK;
+}
+
+
+ucc_status_t ucc_oob_allgather_test(void *req)
+{
+    return UCC_OK;
+}
+
+ucc_status_t ucc_oob_allgather_free(void *req)
+{
+    return UCC_OK;
+}
+
+
+
 // @formatter:off
 inline static void alltoall_helper_xor_pairwise_exchange_barrier(
       void *dest, const void *source, size_t nelems, int PE_start,
@@ -223,11 +294,66 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
     //start ucc
     ucc_init(&lib_params, lib_config, &lib);
     
+    // initialize context
+    int rank = shmem_my_pe(), size = shmem_n_pes();
+
+    long * my_symmetric_counter_ptr = (long *) shmem_malloc(sizeof(long));
+
+    shmem_barrier_all();
+
+    ucc_shmem_oob_info_t my_oob_info = {
+      .rank = shmem_my_pe(),
+      .size = shmem_n_pes(),
+      .sync_counter = my_symmetric_counter_ptr 
+    };
+
+    ucc_context_oob_coll_t context_oob_coll = {
+      .allgather = ucc_oob_all_gather,
+      .req_test  = ucc_oob_allgather_test,
+      .req_free  = ucc_oob_allgather_free,
+      .coll_info = (void*)&my_oob_info, // Replace MPI_COMM_WORLD with this
+      .n_oob_eps = my_oob_info.size,    // Corrected: Total count
+      .oob_ep    = my_oob_info.rank     // Corrected: Local rank
+    };
+
+    ucc_mem_map_t map_segments[1];
+
+    void * onesided_buff = shmem_calloc(1024, size);
+    map_segments[0].address = onesided_buff;
+    map_segments[0].len = 1024;
+
+    ucc_mem_map_params_t mem_params = { 
+      .segments = map_segments,
+      .n_segments = 1
+    };
+
+    const ucc_context_params_t context_params = {
+      .mask = UCC_CONTEXT_PARAM_FIELD_TYPE | UCC_CONTEXT_PARAM_FIELD_SYNC_TYPE | \
+      UCC_CONTEXT_PARAM_FIELD_OOB | UCC_CONTEXT_PARAM_FIELD_MEM_PARAMS,
+      .type = UCC_CONTEXT_SHARED,
+      .sync_type = UCC_NO_SYNC_COLLECTIVES,
+      .oob = context_oob_coll,
+      .mem_params = mem_params,
+    };
+
+    ucc_context_config_h context_config;
+
+  
+    ucc_context_config_read(lib, NULL, &context_config);
+    
+
+    ucc_context_h context_handle;
+
+    shmem_barrier_all();
+    ucc_context_create(lib, &context_params, context_config, &context_handle);
+
+    /* Create Team Context */
+
+    
 
 
-
-
-
+    ucc_context_destroy(context_handle); 
+    shmem_free(my_symmetric_counter_ptr);
     ucc_finalize(lib);
 }
 

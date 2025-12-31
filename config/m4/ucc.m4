@@ -25,7 +25,6 @@ AS_IF([test "x$with_ucc" = "xyes"], [
         ]
 )
 
-
 AS_IF([test "x$ucc_happy" = "xno"], [
             AC_MSG_ERROR([Cannot find required UCC support])
     ], [
