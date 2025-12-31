@@ -275,12 +275,9 @@ ucc_status_t ucc_oob_allgather_free(void *req)
 }
 
 
-
-// @formatter:off
 inline static void alltoall_helper_xor_pairwise_exchange_barrier(
       void *dest, const void *source, size_t nelems, int PE_start,
       int logPE_stride, int PE_size, long *pSync) {
-
     ucc_lib_h lib;
     ucc_lib_params_t lib_params = {
             .mask = UCC_LIB_PARAM_FIELD_THREAD_MODE | UCC_LIB_PARAM_FIELD_SYNC_TYPE,
@@ -301,12 +298,11 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
 
     shmem_barrier_all();
 
-    ucc_shmem_oob_info_t my_oob_info = {
-      .rank = shmem_my_pe(),
-      .size = shmem_n_pes(),
-      .sync_counter = my_symmetric_counter_ptr 
-    };
-
+    static ucc_shmem_oob_info_t my_oob_info;
+    my_oob_info.rank = rank;
+    my_oob_info.size = size;
+    my_oob_info.sync_counter = my_symmetric_counter_ptr;
+    
     ucc_context_oob_coll_t context_oob_coll = {
       .allgather = ucc_oob_all_gather,
       .req_test  = ucc_oob_allgather_test,
@@ -316,8 +312,7 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
       .oob_ep    = my_oob_info.rank     // Corrected: Local rank
     };
 
-    ucc_mem_map_t map_segments[1];
-
+    static ucc_mem_map_t map_segments[1];
     void * onesided_buff = shmem_calloc(1024, size);
     map_segments[0].address = onesided_buff;
     map_segments[0].len = 1024;
@@ -345,15 +340,83 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
     ucc_context_h context_handle;
 
     shmem_barrier_all();
-    ucc_context_create(lib, &context_params, context_config, &context_handle);
 
-    /* Create Team Context */
+    ucc_status_t ctx_status;
+    ctx_status = ucc_context_create(lib, &context_params, context_config, &context_handle);
+    if (ctx_status != UCC_OK){
+      printf("ERROR: could not create ucc context\n");
+      return;
+    }
 
+    ucc_team_oob_coll_t team_oob_coll = {
+      .allgather = ucc_oob_all_gather,
+      .req_test  = ucc_oob_allgather_test,
+      .req_free  = ucc_oob_allgather_free,
+      .coll_info = (void*)&my_oob_info, // Replace MPI_COMM_WORLD with this
+      .n_oob_eps = my_oob_info.size,    // Corrected: Total count
+      .oob_ep    = my_oob_info.rank     // Corrected: Local rank
+    };
+
+    /* Create Team Context */    
+    uint32_t num_contexts = 1; // might have to change with multiple contexts
+    const ucc_team_params_t team_params = {
+      .mask = UCC_TEAM_PARAM_FIELD_ORDERING | UCC_TEAM_PARAM_FIELD_OOB | UCC_TEAM_PARAM_FIELD_EP | UCC_TEAM_PARAM_FIELD_EP_RANGE,
+      .ordering = UCC_COLLECTIVE_POST_UNORDERED, /* ordered might be needed for shmem_fence? */
+      .oob = team_oob_coll, 
+      .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG, 
+      .ep = (uint64_t) shmem_my_pe(), /* the endpoint is just the rank? */
+    };
+
+    ucc_team_h team_handle; 
+    ucc_status_t team_status = ucc_team_create_post(&context_handle, num_contexts, &team_params, &team_handle);
+    if (team_status != UCC_OK || team_handle == NULL){
+      printf("ERROR: could not create team\n");
+      return;
+    }
+
+    while (UCC_INPROGRESS == ucc_team_create_test(team_handle)) {
+      ucc_context_progress(context_handle); 
+    }
+
+    /* Finally do the collective operation: */
     
+    ucc_coll_buffer_info_t coll_src_buffer_info =  {
+      .buffer = source,
+      .count = nelems,
+      .datatype = UCC_DT_UINT8,
+      .mem_type = UCC_MEMORY_TYPE_HOST 
+    };
+ 
+    ucc_coll_buffer_info_t coll_dst_buffer_info =  {
+      .buffer = dest,
+      .count = nelems,
+      .datatype = UCC_DT_UINT8,
+      .mem_type = UCC_MEMORY_TYPE_HOST 
+    };
 
+    ucc_coll_args_t coll_args = {
+      .mask = 0, /* just the bare minimum */
+      .coll_type = UCC_COLL_TYPE_ALLTOALL,
+      .src.info = coll_src_buffer_info,
+      .dst.info = coll_dst_buffer_info,
+      };
 
+    ucc_coll_req_h coll_handle;
+    ucc_collective_init(&coll_args, &coll_handle, team_handle);
+    ucc_collective_post(coll_handle);
+    
+    /* poll operation until done */
+    while(ucc_collective_test(coll_handle) == UCC_INPROGRESS) {
+      ucc_context_progress(context_handle); // This actually drives the communication
+    }
+
+    ucc_collective_finalize(coll_handle); 
+
+    /* cleanup */
+    ucc_team_destroy(team_handle);
     ucc_context_destroy(context_handle); 
     shmem_free(my_symmetric_counter_ptr);
+    shmem_free(onesided_buff);
     ucc_finalize(lib);
 }
 
