@@ -206,10 +206,6 @@ void shcoll_set_alltoall_round_sync(int rounds_sync) {
     }                                                                          \
   }
 
-#include <shmem.h>
-#include <ucc/api/ucc.h>
-#include <stdlib.h>
-
 typedef struct {
     int rank;
     int size;
@@ -285,13 +281,6 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
             .sync_type = UCC_NO_SYNC_COLLECTIVES
             };
     int64_t * source_test = (int64_t *) source;
-    printf("Source array on pe %d: ", shmem_my_pe());
-    for (int i = 0; i < 8; i ++){
-      printf("%d ", source_test[i]);
-    }
-    printf("\n");
-    printf("nelems: %d, PE_size: %d\n", nelems, PE_size);
-
     ucc_lib_config_h lib_config;
     ucc_lib_config_read(NULL, NULL, &lib_config);
 
@@ -305,7 +294,9 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
 
     shmem_barrier_all();
 
-    static ucc_shmem_oob_info_t my_oob_info;
+    /* static ucc_shmem_oob_info_t my_oob_info; */
+    
+    ucc_shmem_oob_info_t my_oob_info;
     my_oob_info.rank = rank;
     my_oob_info.size = size;
     my_oob_info.sync_counter = my_symmetric_counter_ptr;
@@ -319,7 +310,8 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
       .oob_ep    = my_oob_info.rank     // Corrected: Local rank
     };
 
-    static ucc_mem_map_t map_segments[1];
+    /* static ucc_mem_map_t map_segments[1]; */
+    ucc_mem_map_t map_segments[1];
     void * onesided_buff = shmem_calloc(1024, size);
     map_segments[0].address = onesided_buff;
     map_segments[0].len = 1024;
