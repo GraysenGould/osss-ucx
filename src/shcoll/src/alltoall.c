@@ -284,6 +284,13 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
             .thread_mode = UCC_THREAD_SINGLE, /* will have to align with OpenSHMEM in future */
             .sync_type = UCC_NO_SYNC_COLLECTIVES
             };
+    int64_t * source_test = (int64_t *) source;
+    printf("Source array on pe %d: ", shmem_my_pe());
+    for (int i = 0; i < 8; i ++){
+      printf("%d ", source_test[i]);
+    }
+    printf("\n");
+    printf("nelems: %d, PE_size: %d\n", nelems, PE_size);
 
     ucc_lib_config_h lib_config;
     ucc_lib_config_read(NULL, NULL, &lib_config);
@@ -382,14 +389,14 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
     
     ucc_coll_buffer_info_t coll_src_buffer_info =  {
       .buffer = source,
-      .count = nelems,
+      .count = nelems * PE_size,
       .datatype = UCC_DT_UINT8,
       .mem_type = UCC_MEMORY_TYPE_HOST 
     };
  
     ucc_coll_buffer_info_t coll_dst_buffer_info =  {
       .buffer = dest,
-      .count = nelems,
+      .count = nelems * PE_size,
       .datatype = UCC_DT_UINT8,
       .mem_type = UCC_MEMORY_TYPE_HOST 
     };
