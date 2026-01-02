@@ -48,6 +48,7 @@ specifications
 *.sapp
 *~
 *\\#
+*.swp
 
 Makefile
 static-components.h

@@ -30,8 +30,6 @@
 #include <ucc/api/ucc_status.h>
 #include <ucc/api/ucc_def.h>
 
-
-
 /**
  * @brief Calculate edge color for color pairwise exchange algorithm
  *
@@ -334,7 +332,6 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
 
   
     ucc_context_config_read(lib, NULL, &context_config);
-    
 
     ucc_context_h context_handle;
 

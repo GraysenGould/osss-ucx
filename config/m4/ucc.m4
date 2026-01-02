@@ -45,6 +45,9 @@ AS_IF([test "x$ucc_happy" = "xno"], [
 
             UCC_VERSION_STRING=`printf "%u.%u" $maj $min`
             AS_BOX(UCX version is $UCC_VERSION_STRING)
+            
+            /* define HAVE_UCC so library knows to use UCC */
+            AC_SUBST([HAVE_UCC], [1])
 
             AC_DEFINE_UNQUOTED([UCC_VERSION_STRING], ["$UCC_VERSION_STRING"], [Version of UCC])
             AC_SUBST([UCC_VERSION_STRING])

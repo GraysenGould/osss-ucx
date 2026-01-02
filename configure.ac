@@ -180,7 +180,7 @@ AC_DEFINE_UNQUOTED([SHMEM_DEFAULT_HEAP_SIZE],
 
 #
 # all the output files
-#
+# 
 
 AC_CONFIG_FILES([
 	Makefile
@@ -197,8 +197,10 @@ AC_CONFIG_FILES([
 	src/shmemc/osh_common
 	src/shmemt/Makefile
 	src/shmemu/Makefile
-	src/shcoll/Makefile
-	src/shcoll/src/Makefile
+  src/ucc_coll/Makefile
+  src/ucc_coll/src/Makefile
+  src/shcoll/Makefile
+  src/shcoll/src/Makefile
 	src/api/Makefile
 	src/api/atomics/Makefile
 	src/osh_info/Makefile
