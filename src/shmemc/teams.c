@@ -30,6 +30,7 @@
 #include "module.h"
 
 #include <stdlib.h>
+#include <../ucc_coll/src/ucc_coll.h> /* use relative file path for now */
 
 /**
  * @brief Default teams that are always available
@@ -274,7 +275,9 @@ static void initialize_team_world(void) {
   int absent;
 
   initialize_common_team(world, "world", proc.env.prealloc_contexts);
-
+#ifdef HAVE_UCC
+  ucc_coll_team_init(&global_oob_info, &ucc_global_context, &world->ucc_team);
+#endif /* HAVE_UCC */
   /* populate from launch info */
   world->rank = proc.li.rank;
   world->nranks = proc.li.nranks;
@@ -303,7 +306,6 @@ static void initialize_team_shared(void) {
 
   initialize_common_team(shared, "shared",
                          proc.env.prealloc_contexts / proc.li.nnodes);
-
   shared->rank = -1;
   shared->nranks = proc.li.npeers;
   /* Shared team maps contiguous ranks 0..N-1 to the global PEs in peers */
@@ -325,6 +327,7 @@ static void initialize_team_shared(void) {
     kh_val(shared->rev, k) = i;
   }
 }
+
 
 /**
  * @brief Clean up team resources
@@ -351,6 +354,8 @@ void shmemc_teams_init(void) {
   initialize_team_shared();
 }
 
+
+
 /**
  * @brief Finalize teams subsystem
  *
@@ -359,6 +364,9 @@ void shmemc_teams_init(void) {
 void shmemc_teams_finalize(void) {
   finalize_team(shared);
   finalize_team(world);
+#ifdef HAVE_UCC
+  ucc_coll_team_finalize(world->ucc_team);
+#endif /* HAVE_UCC */
 }
 
 /*

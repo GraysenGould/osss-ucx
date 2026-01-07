@@ -15,11 +15,13 @@ shmemt_cppflags        = -I$(top_srcdir)/src/$(shmemt_dir)
 shmemt_ldflags         = -L$(shmemt_dir)
 shmemt_libs            = -lshmemt
 
+
 atomics_dir            = ./atomics
 atomics_cppflags       = -I$(top_srcdir)/src/$(shmemc_dir)
 
 MY_INCLUDE             = -I../../include \
 				-I$(top_srcdir)/include \
+				-I$(top_srcdir)/src/ucc_coll/src \
 				-I$(top_srcdir)/src/shcoll/src
 
 all_cppflags           = $(atomics_cppflags) \
@@ -97,8 +99,10 @@ SUBDIRS                = 	atomics
 
 if HAVE_SHCOLL_INTERNAL
 all_cppflags          += -I@SHCOLL_DIR@
+all_cppflags          += -I@UCC_COLL_DIR@
 else
 all_cppflags          += -I@SHCOLL_DIR@/include
+all_cppflags          += -I@UCC_COLL_DIR@/include
 endif
 
 #

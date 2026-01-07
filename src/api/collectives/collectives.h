@@ -6,7 +6,7 @@
  *
  * This file contains declarations for initializing and finalizing
  * the collective operations subsystem.
- */
+*/
 
 #ifndef _REDUCTIONS_H
 #define _REDUCTIONS_H 1

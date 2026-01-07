@@ -26,9 +26,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <ucc/api/ucc.h>
-#include <ucc/api/ucc_version.h>
-#include <ucc/api/ucc_status.h>
-#include <ucc/api/ucc_def.h>
 
 /**
  * @brief Calculate edge color for color pairwise exchange algorithm
@@ -353,8 +350,7 @@ inline static void alltoall_helper_xor_pairwise_exchange_barrier(
       .oob_ep    = my_oob_info.rank     // Corrected: Local rank
     };
 
-    /* Create Team Context */    
-    uint32_t num_contexts = 1; // might have to change with multiple contexts
+    /* Create Team Context */    uint32_t num_contexts = 1; // might have to change with multiple contexts
     const ucc_team_params_t team_params = {
       .mask = UCC_TEAM_PARAM_FIELD_ORDERING | UCC_TEAM_PARAM_FIELD_OOB | UCC_TEAM_PARAM_FIELD_EP | UCC_TEAM_PARAM_FIELD_EP_RANGE,
       .ordering = UCC_COLLECTIVE_POST_UNORDERED, /* ordered might be needed for shmem_fence? */

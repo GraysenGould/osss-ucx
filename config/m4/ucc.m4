@@ -1,5 +1,7 @@
 ucc_happy=no
 
+UCC_COLL_DIR='$(top_srcdir)/src/collectives/ucc_coll/src'
+
 AC_ARG_WITH([ucc],
             [AS_HELP_STRING([--with-ucc@<:@=DIR@:>@], [Use UCC library])],
 	    [],
@@ -20,6 +22,7 @@ AS_IF([test "x$with_ucc" = "xyes"], [
                     UCC_LIBS="-L$with_ucc/lib64 -Wl,-rpath -Wl,$with_ucc/lib64"
                     UCC_LIBS="$UCC_LIBS -L$with_ucc/lib -Wl,-rpath -Wl,$with_ucc/lib"
                     UCC_LIBS="$UCC_LIBS -lucc"
+                    AC_SUBST([UCC_LIBS])
                     ucc_happy=yes
                 ])
         ]

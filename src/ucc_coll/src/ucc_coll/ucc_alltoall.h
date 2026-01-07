@@ -14,12 +14,13 @@
  * - Counter-based
  */
 
-#ifndef _UCC_ALLTOALL_H
-#define _UCC_ALLTOALL_H 1
+#ifndef _UCC_COLL_ALLTOALL_H
+#define _UCC_COLL_ALLTOALL_H 1
 
 #include <shmem/teams.h>
 #include <shmem/api_types.h>
 #include "shmemu.h"
+#include <shmem.h>
 
 /**
  * @brief Macro to declare type-specific alltoall implementation
@@ -66,4 +67,4 @@ int ucc_alltoallmem(shmem_team_t team, void *dest,
 UCC_SIZED_ALLTOALL_DECLARATION(32)
 UCC_SIZED_ALLTOALL_DECLARATION(64)
 
-#endif /* ! _UCC_ALLTOALL_H */
+#endif /* ! _UCC_COLL_ALLTOALL_H */

@@ -31,10 +31,11 @@ shmemlib_stanza="$shmemlib_ldflags $shmemlib_libs $pmixlib_stanza"
 # or require linking to external directory
 #
 shcoll_stanza="@SHCOLL_LIBS@"
+ucc_stanza="@UCC_LIBS@"
 
 comms_stanza="@UCX_LIBS@"
 
-libs_stanza="$shmemlib_stanza $comms_stanza $shcoll_stanza"
+libs_stanza="$shmemlib_stanza $comms_stanza $shcoll_stanza $ucc_stanza"
 
 # check to see if linking required: if not, throw away link args
 #

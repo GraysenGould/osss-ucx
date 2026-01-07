@@ -10,7 +10,7 @@ exec_prefix=@exec_prefix@
 includedir=@includedir@
 libdir=@libdir@
 #
-Libs: -Wl,-rpath,@libdir@ -L@libdir@ -lshmem -lshmemc-ucx -lshmemu -lshmemt -lshmem-amo @SHCOLL_LIBS@ @PMIX_LIBS@ @UCX_LIBS@ -lm
+Libs: -Wl,-rpath,@libdir@ -L@libdir@ -lshmem -lshmemc-ucx -lshmemu -lshmemt -lshmem-amo @SHCOLL_LIBS@ @UCC_LIBS@ @PMIX_LIBS@ @UCX_LIBS@ -lm
 Cflags: -I@includedir@
 #
 Provides: @PACKAGE@

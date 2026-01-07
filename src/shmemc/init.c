@@ -22,6 +22,7 @@
 #include "pmi_client.h"
 #include "heaps.h"
 #include "env.h"
+#include "../ucc_coll/src/ucc_coll.h"
 
 /**
  * @brief Initialize the OpenSHMEM communications layer
@@ -50,6 +51,10 @@ void shmemc_init(void) {
   shmemc_ucx_init();
 
   shmemc_context_init_default();
+
+#ifdef HAVE_UCC
+  ucc_coll_context_create();
+#endif /* HAVE_UCC */
 
   shmemc_teams_init();
 
@@ -85,6 +90,10 @@ void shmemc_init(void) {
  */
 void shmemc_finalize(void) {
   shmemc_teams_finalize();
+
+#ifdef HAVE_UCC
+  ucc_coll_context_finalize();
+#endif /* HAVE_UCC */
 
   shmemc_ucx_context_default_destroy();
 

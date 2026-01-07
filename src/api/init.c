@@ -14,6 +14,7 @@
 
 #include "shmemu.h"
 #include "shmemc.h"
+#include "ucc_coll.h"
 #include "state.h"
 #include "info.h"
 #include "threading.h"
@@ -74,6 +75,9 @@ static void finalize_helper(void) {
   shmemu_progress_finalize();
 
   shmemc_finalize();
+#ifdef HAVE_UCC
+  ucc_coll_finalize();
+#endif /* HAVE_UCC */
   collectives_finalize();
   shmemt_finalize();
   shmemu_finalize();
@@ -107,8 +111,12 @@ inline static int init_thread_helper(int requested, int *provided) {
 
   /* set up comms, read environment */
   shmemc_init();
-  /* utiltiies */
-  shmemt_init();
+#ifdef HAVE_UCC
+  ucc_coll_init();
+#endif /* HAVE_UCC */ 
+
+  /* utiltiies */ 
+  shmemt_init(); 
   shmemu_init();
   collectives_init();
 
