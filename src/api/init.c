@@ -125,10 +125,6 @@ inline static int init_thread_helper(int requested, int *provided) {
   /* set up comms, read environment */
   shmemc_init();
     
-#ifdef HAVE_UCC
-  ucc_coll_context_create();
-  ucc_coll_team_init(&global_oob_info, &ucc_global_context, &global_ucc_team);
-#endif /* HAVE_UCC */
 
   /* utiltiies */ 
   shmemt_init(); 
@@ -193,6 +189,15 @@ inline static int init_thread_helper(int requested, int *provided) {
   logger(LOG_INIT, "%s(requested=%s [%d], provided->%s [%d])", __func__,
          shmemu_thread_name(requested), requested,
          shmemu_thread_name(proc.td.osh_tl), proc.td.osh_tl);
+
+#ifdef HAVE_UCC
+  printf("DEBUG: Initializing Context\n");
+  ucc_coll_context_create(); 
+  printf("DEBUG: Finished creating context\n");
+  printf("DEBUG: Creating team\n");
+  ucc_coll_team_init(&global_oob_info, &ucc_global_context, &global_ucc_team);
+  printf("DEBUG: Finished creating team\n");
+#endif /* HAVE_UCC */
 
   /* make sure all symmetric memory ready */
   shmem_barrier_all();

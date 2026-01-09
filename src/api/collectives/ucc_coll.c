@@ -20,33 +20,50 @@ inline static void ucc_##_coll_type##_helper(                                 \
       void *dest, const void *source, size_t nelems, int PE_start,            \
       int logPE_stride, int PE_size, long *pSync,                             \
       ucc_team_h team_handle, ucc_context_h context_handle) {                 \
+    printf("DEBUG: Part 8\n"); \
+    printf("pe: %d, source: %p, dest: %p\n", shmem_my_pe(), (void *) source, (void *) dest); \
+    ucc_context_attr_t context_attributes = { \
+      .mask = UCC_CONTEXT_ATTR_FIELD_WORK_BUFFER_SIZE,  \
+      .global_work_buffer_size = 1, \
+    }; \
+    ucc_context_get_attr(ucc_global_context, &context_attributes); \
+    void * work_buffer = (void *) shmem_calloc(context_attributes.global_work_buffer_size * 2, 1); \
+    printf("DEBUG: buffer size: %d\n", (int)context_attributes.global_work_buffer_size); \ 
     ucc_coll_buffer_info_t coll_src_buffer_info =  {                          \
       .buffer = source,                                                       \
-      .count = nelems * PE_size,                                              \
+      .count = nelems,                                              \
       .datatype = UCC_DT_UINT8,                                               \
       .mem_type = UCC_MEMORY_TYPE_HOST                                        \
     };                                                                        \
     ucc_coll_buffer_info_t coll_dst_buffer_info =  {                          \
       .buffer = dest,                                                         \
-      .count = nelems * PE_size,                                              \
+      .count = 2,                                              \
       .datatype = UCC_DT_UINT8,                                               \
       .mem_type = UCC_MEMORY_TYPE_HOST                                        \
     };                                                                        \
     ucc_coll_args_t coll_args = {                                             \
-      .mask = 0, /* just the bare minimum */                                  \
-      .coll_type = _ucc_type_name,                                            \
+      .mask = UCC_COLL_ARGS_FIELD_FLAGS | UCC_COLL_ARGS_FIELD_GLOBAL_WORK_BUFFER,    \
+      .flags = 0,                                                             \
+      .coll_type = UCC_COLL_TYPE_ALLTOALL,                                            \
       .src.info = coll_src_buffer_info,                                       \
       .dst.info = coll_dst_buffer_info,                                       \
+      .global_work_buffer = work_buffer,\
     };                                                                        \
+    printf("DEBUG: Part 9\n");                            \
     ucc_coll_req_h coll_handle;                                               \
     ucc_collective_init(&coll_args, &coll_handle, team_handle);               \
+    printf("DEBUG: Part 9.5\n");                            \
     ucc_collective_post(coll_handle);                                         \
+    printf("DEBUG: Part 10\n");                            \
     /* poll operation until done */                                           \
     while(ucc_collective_test(coll_handle) == UCC_INPROGRESS) {               \
       ucc_context_progress(context_handle);                                   \
       /* This actually drives the communication */                            \
     }                                                                         \
+    printf("DEBUG: Part 10\n");                            \
     ucc_collective_finalize(coll_handle);                                     \
+    printf("DEBUG: Part 11\n");                            \
+    shmem_free(work_buffer); \
 }
 
 
@@ -85,9 +102,7 @@ UCC_COLLECTIVE_HELPER(alltoall, UCC_COLL_TYPE_ALLTOALL)
                                                                                \
     shmemc_team_reset_psync(team_h, SHMEMC_PSYNC_COLLECTIVE);                  \
                                                                                \
-    return 0;                                                                  \
-  }
-
+    return 0;                                                                  \ }
 #define DEFINE_ALLTOALL_TYPES(_type, _typename)                                \
   UCC_ALLTOALL_TYPE_DEFINITION(_type, _typename)                               \
   SHMEM_STANDARD_RMA_TYPE_TABLE(DEFINE_ALLTOALL_TYPES)
@@ -113,7 +128,7 @@ UCC_COLLECTIVE_HELPER(alltoall, UCC_COLL_TYPE_ALLTOALL)
                                 nelems * team_h->nranks);                      \
     SHMEMU_CHECK_NULL(shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE),  \
                       "team_h->pSyncs[COLLECTIVE]");                           \
-                                                                               \
+    printf("DEBUG: RUNING ALLTOALLHELPER");                                                                               \
     ucc_alltoall_helper(                                                       \
         dest, source, nelems, team_h->start,                                   \
         (team_h->stride > 0) ? (int)log2((double)team_h->stride) : 0,          \
@@ -226,7 +241,6 @@ ucc_status_t ucc_oob_allgather_free(void *req)
 
 void ucc_coll_init(){
    
-    printf("DEBUG: part 1\n");
     ucc_lib_params_t lib_params = {
             .mask = UCC_LIB_PARAM_FIELD_THREAD_MODE | UCC_LIB_PARAM_FIELD_SYNC_TYPE,
             .thread_mode = UCC_THREAD_SINGLE, /* will have to align with OpenSHMEM in future */
@@ -234,13 +248,10 @@ void ucc_coll_init(){
             };
     ucc_lib_config_h lib_config;
     
-    printf("DEBUG: part 2\n");
     ucc_lib_config_read(NULL, NULL, &lib_config);
 
-    printf("DEBUG: part 3\n");
     //start ucc
     ucc_init(&lib_params, lib_config, &ucc_lib);
-    printf("DEBUG: part 4\n");
 }
 
 
@@ -286,8 +297,10 @@ void ucc_coll_team_finalize (ucc_team_h team_handle){
 
 
 void ucc_coll_context_create(){
+  
   int rank = shmem_my_pe(), size = shmem_n_pes();
   long * my_symmetric_counter_ptr = (long *) shmem_malloc(sizeof(long));
+
 
   shmem_barrier_all();
   /* TODO: make context not global */ 
@@ -304,8 +317,13 @@ void ucc_coll_context_create(){
     .oob_ep    = global_oob_info.rank     // Corrected: Local rank
   };
 
-  ucc_global_mem_params.segments->address = shmem_calloc(1024, size);
+  
+  ucc_global_mem_params.segments = (ucc_mem_map_t *) shmem_malloc(sizeof(ucc_mem_map_t));
+
+  ucc_global_mem_params.segments->address = shmem_malloc(1024 * size);
+  
   ucc_global_mem_params.segments->len = 1024;
+
   ucc_global_mem_params.n_segments = 1;
 
   const ucc_context_params_t context_params = {
@@ -329,6 +347,7 @@ void ucc_coll_context_create(){
     printf("ERROR: could not create ucc context\n");
     return;
   }
+
 }
 
 void ucc_coll_context_finalize(){
@@ -336,6 +355,7 @@ void ucc_coll_context_finalize(){
   
   ucc_context_destroy(ucc_global_context); 
   shmem_free(global_oob_info.sync_counter);
+  shmem_free(ucc_global_mem_params.segments);
   shmem_free(ucc_global_mem_params.segments->address);
 }
 
