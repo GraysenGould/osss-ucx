@@ -213,11 +213,12 @@ SHMEM_STANDARD_RMA_TYPE_TABLE(DECL_SHIM_ALLTOALL)
  * @param nelems  Number of elements to alltoall
  * @return        Zero on success, non-zero on failure
  */
-int ucc_alltoallmem(shmem_team_t team, void *dest, const void *source,
+int shmem_alltoallmem(shmem_team_t team, void *dest, const void *source,
                       size_t nelems) {
   logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest, source,
          nelems);
-  colls.alltoall_mem.f(team, dest, source, nelems);
+  printf("Running UCC_ALLTOALLMEM!!!\n");
+  ucc_alltoallmem(team, dest, source, nelems);
 }
 
 #ifdef ENABLE_PSHMEM

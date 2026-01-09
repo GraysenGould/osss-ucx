@@ -103,17 +103,37 @@ static void finalize_helper(void) {
  */
 inline static int init_thread_helper(int requested, int *provided) {
   int s;
+  printf("DEBUG: SHMEM library initialization!\n");
 
   /* do nothing if multiple inits */
   if (proc.refcount > 0) {
     return 0;
   }
 
+  printf("DEBUG: Initializing ucc!!\n");
+#ifdef HAVE_UCC
+  //ucc_coll_init();
+  
+  printf("DEBUG: part 1\n");
+  ucc_lib_params_t lib_params = {
+          .mask = UCC_LIB_PARAM_FIELD_THREAD_MODE | UCC_LIB_PARAM_FIELD_SYNC_TYPE,
+          .thread_mode = UCC_THREAD_SINGLE, /* will have to align with OpenSHMEM in future */
+          .sync_type = UCC_NO_SYNC_COLLECTIVES
+          };
+  ucc_lib_config_h lib_config;
+  
+  printf("DEBUG: part 2\n");
+  ucc_lib_config_read(NULL, NULL, &lib_config);
+
+  printf("DEBUG: part 3\n");
+  //start ucc
+  ucc_init(&lib_params, lib_config, &ucc_lib);
+  printf("DEBUG: part 4\n");
+#endif /* HAVE_UCC */ 
+
+  printf("DEBUG: Finished Initializing ucc!!\n");
   /* set up comms, read environment */
   shmemc_init();
-#ifdef HAVE_UCC
-  ucc_coll_init();
-#endif /* HAVE_UCC */ 
 
   /* utiltiies */ 
   shmemt_init(); 

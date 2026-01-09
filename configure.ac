@@ -79,8 +79,8 @@ LT_INIT
 
 m4_include([config/m4/pmix.m4])
 m4_include([config/m4/ucx.m4])
-m4_include([config/m4/ucc.m4])
 m4_include([config/m4/shcoll.m4])
+m4_include([config/m4/ucc.m4])
 
 m4_include([config/m4/confargs.m4])
 # m4_include([config/m4/progress.m4])
@@ -197,10 +197,10 @@ AC_CONFIG_FILES([
 	src/shmemc/osh_common
 	src/shmemt/Makefile
 	src/shmemu/Makefile
-  src/ucc_coll/Makefile
-  src/ucc_coll/src/Makefile
   src/shcoll/Makefile
   src/shcoll/src/Makefile
+  src/ucc_coll/Makefile
+  src/ucc_coll/src/Makefile
 	src/api/Makefile
 	src/api/atomics/Makefile
 	src/osh_info/Makefile

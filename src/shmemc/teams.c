@@ -275,6 +275,7 @@ static void initialize_team_world(void) {
   int absent;
 
   initialize_common_team(world, "world", proc.env.prealloc_contexts);
+  printf("DEBUG: Creating Team Handle!!\n");
 #ifdef HAVE_UCC
   ucc_coll_team_init(&global_oob_info, &ucc_global_context, &world->ucc_team);
 #endif /* HAVE_UCC */

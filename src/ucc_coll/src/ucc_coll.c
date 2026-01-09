@@ -61,16 +61,21 @@ ucc_status_t ucc_oob_allgather_free(void *req)
 
 void ucc_coll_init(){
    
+    printf("DEBUG: part 1\n");
     ucc_lib_params_t lib_params = {
             .mask = UCC_LIB_PARAM_FIELD_THREAD_MODE | UCC_LIB_PARAM_FIELD_SYNC_TYPE,
             .thread_mode = UCC_THREAD_SINGLE, /* will have to align with OpenSHMEM in future */
             .sync_type = UCC_NO_SYNC_COLLECTIVES
             };
     ucc_lib_config_h lib_config;
+    
+    printf("DEBUG: part 2\n");
     ucc_lib_config_read(NULL, NULL, &lib_config);
 
+    printf("DEBUG: part 3\n");
     //start ucc
     ucc_init(&lib_params, lib_config, &ucc_lib);
+    printf("DEBUG: part 4\n");
 }
 
 

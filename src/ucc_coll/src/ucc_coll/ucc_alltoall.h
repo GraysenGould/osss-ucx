@@ -22,49 +22,49 @@
 #include "shmemu.h"
 #include <shmem.h>
 
-/**
- * @brief Macro to declare type-specific alltoall implementation
- *
- * @param _algo Algorithm name
- * @param _type Data type
- * @param _typename Type name string
- */
-#define UCC_TYPED_ALLTOALL_DECLARATION(_type, _typename)             \
-  int ucc_##_typename##_alltoall(                                   \
-      shmem_team_t team, _type *dest, const _type *source, size_t nelems);
-
-/**
- * @brief Macro to declare alltoall implementations for all supported types
- *
- * @param _algo Algorithm name to generate declarations for
- */
-#define DECLARE_ALLTOALL_TYPES(_type, _typename)                               \
-  UCC_TYPED_ALLTOALL_DECLARATION(_type, _typename)  \
-SHMEM_STANDARD_RMA_TYPE_TABLE(DECLARE_ALLTOALL_TYPES)
-#undef DECLARE_ALLTOALL_TYPES
-
-/**
- * @brief Macro to declare generic alltoallmem implementations
- *
- * @param _algo Algorithm name to generate declarations for
- */
-
-int ucc_alltoallmem(shmem_team_t team, void *dest,
-                    const void *source, size_t nelems);
-
-/**
- * @brief Macro to declare sized alltoall implementations
- *
- * @param _algo Algorithm name
- * @param _size Size in bits
- */
-#define UCC_SIZED_ALLTOALL_DECLARATION(_size)                               \
-  void ucc_alltoall##_size(                                                    \
-      void *dest, const void *source, size_t nelems, int PE_start,             \
-      int logPE_stride, int PE_size, long *pSync);
-
-/* Declare sized variants for each algorithm */
-UCC_SIZED_ALLTOALL_DECLARATION(32)
-UCC_SIZED_ALLTOALL_DECLARATION(64)
-
+// /**
+//  * @brief Macro to declare type-specific alltoall implementation
+//  *
+//  * @param _algo Algorithm name
+//  * @param _type Data type
+//  * @param _typename Type name string
+//  */
+// #define UCC_TYPED_ALLTOALL_DECLARATION(_type, _typename)             \
+//   int ucc_##_typename##_alltoall(                                   \
+//       shmem_team_t team, _type *dest, const _type *source, size_t nelems);
+//
+// /**
+//  * @brief Macro to declare alltoall implementations for all supported types
+//  *
+//  * @param _algo Algorithm name to generate declarations for
+//  */
+// #define DECLARE_ALLTOALL_TYPES(_type, _typename)                               \
+//   UCC_TYPED_ALLTOALL_DECLARATION(_type, _typename)  \
+// SHMEM_STANDARD_RMA_TYPE_TABLE(DECLARE_ALLTOALL_TYPES)
+// #undef DECLARE_ALLTOALL_TYPES
+//
+// /**
+//  * @brief Macro to declare generic alltoallmem implementations
+//  *
+//  * @param _algo Algorithm name to generate declarations for
+//  */
+//
+// int ucc_alltoallmem(shmem_team_t team, void *dest,
+//                     const void *source, size_t nelems);
+//
+// /**
+//  * @brief Macro to declare sized alltoall implementations
+//  *
+//  * @param _algo Algorithm name
+//  * @param _size Size in bits
+//  */
+// #define UCC_SIZED_ALLTOALL_DECLARATION(_size)                               \
+//   void ucc_alltoall##_size(                                                    \
+//       void *dest, const void *source, size_t nelems, int PE_start,             \
+//       int logPE_stride, int PE_size, long *pSync);
+//
+// /* Declare sized variants for each algorithm */
+// UCC_SIZED_ALLTOALL_DECLARATION(32)
+// UCC_SIZED_ALLTOALL_DECLARATION(64)
+//
 #endif /* ! _UCC_COLL_ALLTOALL_H */
