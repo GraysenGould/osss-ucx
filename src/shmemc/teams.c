@@ -30,7 +30,6 @@
 #include "module.h"
 
 #include <stdlib.h>
-#include <../ucc_coll/src/ucc_coll.h> /* use relative file path for now */
 
 /**
  * @brief Default teams that are always available
@@ -275,10 +274,6 @@ static void initialize_team_world(void) {
   int absent;
 
   initialize_common_team(world, "world", proc.env.prealloc_contexts);
-  printf("DEBUG: Creating Team Handle!!\n");
-#ifdef HAVE_UCC
-  ucc_coll_team_init(&global_oob_info, &ucc_global_context, &world->ucc_team);
-#endif /* HAVE_UCC */
   /* populate from launch info */
   world->rank = proc.li.rank;
   world->nranks = proc.li.nranks;
@@ -365,9 +360,6 @@ void shmemc_teams_init(void) {
 void shmemc_teams_finalize(void) {
   finalize_team(shared);
   finalize_team(world);
-#ifdef HAVE_UCC
-  ucc_coll_team_finalize(world->ucc_team);
-#endif /* HAVE_UCC */
 }
 
 /*

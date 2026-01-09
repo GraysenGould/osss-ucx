@@ -14,12 +14,12 @@
 
 #include "shmemu.h"
 #include "shmemc.h"
-#include "ucc_coll.h"
 #include "state.h"
 #include "info.h"
 #include "threading.h"
 #include "shmem_mutex.h"
 #include "collectives/collectives.h"
+#include "collectives/ucc_coll.h"
 #include "module.h"
 #include "shmem/api.h"
 
@@ -74,8 +74,14 @@ static void finalize_helper(void) {
 
   shmemu_progress_finalize();
 
-  shmemc_finalize();
 #ifdef HAVE_UCC
+  ucc_coll_team_finalize(global_ucc_team);
+#endif /* HAVE_UCC */
+
+  shmemc_finalize();
+
+#ifdef HAVE_UCC
+  ucc_coll_context_finalize();
   ucc_coll_finalize();
 #endif /* HAVE_UCC */
   collectives_finalize();
@@ -112,28 +118,17 @@ inline static int init_thread_helper(int requested, int *provided) {
 
   printf("DEBUG: Initializing ucc!!\n");
 #ifdef HAVE_UCC
-  //ucc_coll_init();
-  
-  printf("DEBUG: part 1\n");
-  ucc_lib_params_t lib_params = {
-          .mask = UCC_LIB_PARAM_FIELD_THREAD_MODE | UCC_LIB_PARAM_FIELD_SYNC_TYPE,
-          .thread_mode = UCC_THREAD_SINGLE, /* will have to align with OpenSHMEM in future */
-          .sync_type = UCC_NO_SYNC_COLLECTIVES
-          };
-  ucc_lib_config_h lib_config;
-  
-  printf("DEBUG: part 2\n");
-  ucc_lib_config_read(NULL, NULL, &lib_config);
-
-  printf("DEBUG: part 3\n");
-  //start ucc
-  ucc_init(&lib_params, lib_config, &ucc_lib);
-  printf("DEBUG: part 4\n");
+  ucc_coll_init();
 #endif /* HAVE_UCC */ 
 
   printf("DEBUG: Finished Initializing ucc!!\n");
   /* set up comms, read environment */
   shmemc_init();
+    
+#ifdef HAVE_UCC
+  ucc_coll_context_create();
+  ucc_coll_team_init(&global_oob_info, &ucc_global_context, &global_ucc_team);
+#endif /* HAVE_UCC */
 
   /* utiltiies */ 
   shmemt_init(); 

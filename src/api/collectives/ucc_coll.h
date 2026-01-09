@@ -5,9 +5,9 @@
 
 #define SHMEM_SUCCESS 0
 
-#include "ucc_coll/ucc_alltoall.h"
 #include <ucc/api/ucc.h>
 #include <stdio.h>
+#include <shmem.h>
 
 typedef struct {
     int rank;
@@ -26,6 +26,8 @@ extern ucc_context_h ucc_global_context;
 extern ucc_team_h ucc_team_world;
 extern ucc_shmem_oob_info_t global_oob_info;
 extern ucc_mem_map_params_t ucc_global_mem_params;
+extern ucc_team_h global_ucc_team;
+
 
 ucc_status_t ucc_oob_all_gather(void *sbuf, void *rbuf, size_t msglen,
                                 void *coll_info, void **req);
@@ -46,19 +48,6 @@ void ucc_coll_team_finalize (ucc_team_h team_handle);
 void ucc_coll_context_create();
 
 void ucc_coll_context_finalize();
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**
  * @brief Macro to declare type-specific alltoall implementation

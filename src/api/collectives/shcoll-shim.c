@@ -15,12 +15,10 @@
 #include "thispe.h"
 #include "shmemu.h"
 #include "collectives/table.h"
+#include "collectives/ucc_coll.h"
 #include "shmem/teams.h"
 
 #include "shmem/api_types.h"
-#include <ucc/api/ucc.h>
-#include "../../ucc_coll/src/ucc_coll.h"
-#include "../../ucc_coll/src/ucc_coll/ucc_alltoall.h"
 
 /**
  * @brief Helper macro to register collective operations

@@ -20,7 +20,6 @@
 
 #include <sys/types.h>
 #include <ucp/api/ucp.h>
-#include <ucc/api/ucc.h>
 
 /**
  * @brief Information exchanged between PEs at startup
@@ -114,10 +113,6 @@ typedef struct shmemc_team {
 
   shmemc_team_h parent; /**< parent team we split from,
                            NULL if predef */
-#ifdef HAVE_UCC 
-  ucc_team_h ucc_team;
-  ucc_context_h ucc_context;
-#endif
 
   /* now need to add pSync arrays for collectives */
 #define SHMEMC_NUM_PSYNCS 2 /* For barrier/sync and other collectives */

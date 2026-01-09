@@ -36,18 +36,6 @@ AS_IF([test "x$ucc_happy" = "xno"], [
             AC_DEFINE([HAVE_UCC], [1], [UCC support])
             AC_MSG_NOTICE([UCC: checking for API features...])
 
-
-            UCC_COLL_LIBS="$UCC_COLL_LIBS -lucc_coll"
-            AC_SUBST([UCC_COLL_LIBS])
-
-            AC_DEFINE([HAVE_UCC], [1], [UCC_COLL support])
-
-            AC_DEFINE_UNQUOTED([UCC_COLL_DIR],
-              ["$UCC_COLL_DIR"],
-              [UCC_COLL installation directory])
-
-            AC_SUBST([UCC_COLL_DIR])
-
             AC_LANG_PUSH([C])
 
             #could do some checking of important routines:
@@ -67,24 +55,6 @@ AS_IF([test "x$ucc_happy" = "xno"], [
 
             AC_DEFINE_UNQUOTED([UCC_VERSION_STRING], ["$UCC_VERSION_STRING"], [Version of UCC])
             AC_SUBST([UCC_VERSION_STRING])
-
-
-
-
-            dnl OSSS_DIR='/mnt/DISCL/home/gragould/sw/el9-x86_64/osss-ucx_1.5'
-            dnl UCC_COLL_LIBS="$UCC_COLL_LIBS -L$OSSS_DIR/lib"
-            dnl UCC_COLL_LIBS="$UCC_COLL_LIBS -Wl,-rpath -Wl,$OSSS_DIR/lib"
-            dnl UCC_COLL_LIBS="$UCC_COLL_LIBS -lucc_coll"
-            dnl
-            dnl LDFLAGS="$LDFLAGS $UCC_COLL_LIBS"
-            dnl
-            dnl AC_SUBST([UCC_COLL_LIBS])
-            dnl AC_DEFINE_UNQUOTED([UCC_COLL_DIR],
-            dnl        ["$UCC_COLL_DIR"],
-            dnl        [UCC_COLL installation directory])
-
-            dnl AC_SUBST([UCC_COLL_DIR])
-
 
     ]
 )

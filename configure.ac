@@ -199,8 +199,6 @@ AC_CONFIG_FILES([
 	src/shmemu/Makefile
   src/shcoll/Makefile
   src/shcoll/src/Makefile
-  src/ucc_coll/Makefile
-  src/ucc_coll/src/Makefile
 	src/api/Makefile
 	src/api/atomics/Makefile
 	src/osh_info/Makefile
