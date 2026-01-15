@@ -74,16 +74,8 @@ static void finalize_helper(void) {
 
   shmemu_progress_finalize();
 
-#ifdef HAVE_UCC
-  //ucc_coll_team_finalize(global_ucc_team);
-#endif /* HAVE_UCC */
-
   shmemc_finalize();
 
-#ifdef HAVE_UCC
-  /* ucc_coll_context_finalize(); */
-  /* ucc_coll_finalize(); */
-#endif /* HAVE_UCC */
   collectives_finalize();
   shmemt_finalize();
   shmemu_finalize();
@@ -109,7 +101,6 @@ static void finalize_helper(void) {
  */
 inline static int init_thread_helper(int requested, int *provided) {
   int s;
-  printf("DEBUG: SHMEM library initialization!\n");
 
   /* do nothing if multiple inits */
   if (proc.refcount > 0) {
@@ -117,7 +108,6 @@ inline static int init_thread_helper(int requested, int *provided) {
   }
 
 
-  printf("DEBUG: Finished Initializing ucc!!\n");
   /* set up comms, read environment */
   shmemc_init();
     
@@ -186,19 +176,6 @@ inline static int init_thread_helper(int requested, int *provided) {
          shmemu_thread_name(requested), requested,
          shmemu_thread_name(proc.td.osh_tl), proc.td.osh_tl);
 
-  /* make sure all symmetric memory ready */
-  shmem_barrier_all();
-
-#ifdef HAVE_UCC
-  /* printf("DEBUG: Initializing ucc!!\n"); */
-  /* ucc_coll_init(); */
-  /* printf("DEBUG: Initializing Context\n"); */
-  /* ucc_coll_context_create();  */
-  /* printf("DEBUG: Finished creating context\n"); */
-  /* printf("DEBUG: Creating team\n"); */
-  /* ucc_coll_team_init(&global_oob_info, &ucc_global_context, &global_ucc_team); */
-  /* printf("DEBUG: Finished creating team\n"); */
-#endif /* HAVE_UCC */
   shmem_barrier_all();
 
   /* just declare success */
