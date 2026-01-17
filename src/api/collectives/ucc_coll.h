@@ -12,13 +12,17 @@
 typedef struct {
     int rank;
     int size;
-    long *sync_counter; // Symmetric memory pointer
-} ucc_shmem_oob_info_t;
+} shmem_oob_info_t;
 
 typedef struct {
-    ucc_shmem_oob_info_t *info;
-    int                   is_done;
-} oob_request_t;
+  void * sbuf;
+  void * sym_sbuf;
+  void * rbuf;
+  void * sym_rbuf;
+  size_t msglen;
+  int64_t *send_counter;
+  shmem_oob_info_t *oob_info;
+} shmem_oob_allgather_info_t;
 
 
 ucc_status_t ucc_oob_all_gather(void *sbuf, void *rbuf, size_t msglen,
