@@ -63,8 +63,11 @@ inline static void ucc_alltoallmem_helper(
     oob_info.size = shmem_n_pes();
     
     printf("DEBUG: Part 3\n");
-    /* Create Global Work buffer with plenty of space */
-    void * global_work_buffer = (void *) shmem_calloc(1024, 1);
+    /* Create Global Work Buffer with plenty of space (x2 we need) */
+    ucc_context_attr_t ctx_attr;
+    ctx_attr.mask = UCC_CONTEXT_ATTR_FIELD_WORK_BUFFER_SIZE;
+    int global_work_buffer_size = ctx_attr.global_work_buffer_size * sizeof(long) * 2;
+    void * global_work_buffer = (void *) shmem_calloc(global_work_buffer_size, 1);
 
     /* Register necessary memory */
     int n_segments = 3;
@@ -74,7 +77,7 @@ inline static void ucc_alltoallmem_helper(
     map_segments[1].address = dest;
     map_segments[1].len = nelems * PE_size;
     map_segments[2].address = global_work_buffer;
-    map_segments[2].len = 1024;
+    map_segments[2].len = global_work_buffer_size;
 
     context_params.mask = UCC_CONTEXT_PARAM_FIELD_OOB | UCC_CONTEXT_PARAM_FIELD_MEM_PARAMS;
     context_params.oob.allgather         = ucc_oob_all_gather;
@@ -97,46 +100,44 @@ inline static void ucc_alltoallmem_helper(
 
     ucc_context_config_release(context_config);
 
-    /* CREATE UCC TEAMS */
-    ucc_team_oob_coll_t team_oob_coll = {
-      .allgather = ucc_oob_all_gather,
-      .req_test  = ucc_oob_allgather_test,
-      .req_free  = ucc_oob_allgather_free,
-      .coll_info = (void*)&oob_info,
-      .n_oob_eps = oob_info.size,    
-      .oob_ep    = oob_info.rank 
-    };
+    /* ------------ CREATE UCC TEAMS --------------- */
+    
+    ucc_team_oob_coll_t team_oob_coll;
+    team_oob_coll.allgather = ucc_oob_all_gather;
+    team_oob_coll.req_test  = ucc_oob_allgather_test;
+    team_oob_coll.req_free  = ucc_oob_allgather_free;
+    team_oob_coll.coll_info = (void*)&oob_info;
+    team_oob_coll.n_oob_eps = oob_info.size;
+    team_oob_coll.oob_ep    = oob_info.rank;
 
+    // TODO: use ucc_ep_map_t in the future
     printf("DEBUG: Part 7\n");
     /* Create Team Context */   
-    uint32_t num_contexts = 1; // might have to change with multiple contexts
     const ucc_team_params_t team_params = {
-      .mask = UCC_TEAM_PARAM_FIELD_ORDERING | UCC_TEAM_PARAM_FIELD_OOB | UCC_TEAM_PARAM_FIELD_EP | UCC_TEAM_PARAM_FIELD_EP_RANGE,
-      .ordering = UCC_COLLECTIVE_POST_UNORDERED, /* ordered might be needed for shmem_fence? */
+      .mask = UCC_TEAM_PARAM_FIELD_OOB | UCC_TEAM_PARAM_FIELD_EP | UCC_TEAM_PARAM_FIELD_EP_RANGE | UCC_TEAM_PARAM_FIELD_FLAGS,
       .oob = team_oob_coll, 
       .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG, 
-      .ep = (uint64_t) shmem_my_pe(), /* the endpoint is just the rank? */
+      .ep = (uint64_t) oob_info.rank,
+      .flags  = UCC_TEAM_FLAG_COLL_WORK_BUFFER,      
     };
 
+    uint32_t num_contexts = 1; // might have to change with multiple contexts
     ucc_team_h team_handle; 
-    ucc_status_t team_status = ucc_team_create_post(&context_handle, num_contexts, &team_params, &team_handle);
-    if (team_status != UCC_OK && team_status != UCC_INPROGRESS) {
-      printf("ERROR: team_create_post failed: %d\n", team_status);
+    if (UCC_OK != (status = ucc_team_create_post(&context_handle, num_contexts, 
+          &team_params, &team_handle))){
+      printf("ERROR: team_create_post failed: %d\n", status);
       return;
     }
-    printf("DEBUG: Part 8\n");
-    while (1) {
-      team_status = ucc_team_create_test(team_handle);
-      if (team_status == UCC_OK) {
-        break; // team ready
-      } else if (team_status < 0) {
-        printf("ERROR: team_create_test failed: %d\n", team_status);
-        return;
-      }
-      ucc_context_progress(context_handle); // drive progress
-    }
-    /* Finally do the collective operation: */
 
+    printf("DEBUG: Part 8\n");
+    while (UCC_INPROGRESS == 
+        (status = ucc_team_create_test(team_handle))) {}
+    if (UCC_OK != status) {
+      printf("ERROR: ucc_team_create_test failed: %d\n", status);
+      return;
+    }
+
+    /* ------ Do Collective Operation ------- */
     ucc_coll_buffer_info_t coll_src_buffer_info =  {
       .buffer = source,
       .count = nelems * PE_size,
@@ -157,6 +158,7 @@ inline static void ucc_alltoallmem_helper(
       .src.info = coll_src_buffer_info,
       .dst.info = coll_dst_buffer_info,
       .global_work_buffer = global_work_buffer,
+      .flags = UCC_COLL_ARGS_FLAG_MEM_MAPPED_BUFFERS, /* delete flag if want to skip memory pre-registration */
     };
     
     printf("DEBUG: Part 9\n");
@@ -167,7 +169,10 @@ inline static void ucc_alltoallmem_helper(
       printf("Could Not Initalize UCC collective!!\n");
       return;
     }
-    ucc_collective_post(coll_handle);
+    if (UCC_OK != ucc_collective_post(coll_handle)){
+      printf("Could No Post UCC collective.\n");
+      return;
+    }
     
     printf("DEBUG: Part 10\n");
     /* poll operation until done */
@@ -220,109 +225,153 @@ inline static void ucc_alltoallmem_helper(
 UCC_ALLTOALLMEM_DEFINITION(placeholder)
 
 
+
 ucc_status_t ucc_oob_all_gather(void *sbuf, void *rbuf, size_t msglen,
-                                void *oob_info, void **req)
-{ 
+                                void *coll_info, void **req)
+{
+  shmem_oob_info_t *info = (shmem_oob_info_t *)coll_info;   
+  // We need symmetric memory for OpenSHMEM OOB to work.
+  // UCC provides 'sbuf' and 'rbuf' which are NOT symmetric.
+  void *sym_sbuf = shmem_malloc(msglen);
+  void *sym_rbuf = shmem_malloc(msglen * info->size);
+
+  // 1. Copy UCC's private data to symmetric memory
+  memcpy(sym_sbuf, sbuf, msglen);
   shmem_barrier_all();
-  shmem_oob_allgather_info_t * allgather_info = 
-      (shmem_oob_allgather_info_t *) shmem_malloc(sizeof(shmem_oob_allgather_info_t));
-  if (allgather_info == NULL){
-    printf("ERROR: Could not allocate symmetric memory for UCC oob\n");
-    return UCC_ERR_NO_MEMORY;
+
+  // 2. Perform the Put-based Allgather (as written before)
+  for (int i = 0; i < info->size; i++) {
+      void *dest = (char*)sym_rbuf + (info->rank * msglen);
+      shmem_putmem(dest, sym_sbuf, msglen, i);
   }
-
-  allgather_info->oob_info = (shmem_oob_info_t *)oob_info; 
-  printf("DEBUG: OOB_ALLGATHER part 1\n");
-  allgather_info->sbuf     = sbuf;
-  allgather_info->sym_sbuf = shmem_malloc(msglen);
-  if (allgather_info->sym_sbuf == NULL){
-    shmem_free(allgather_info);
-    printf("ERROR: Could not allocate symmetric memory for UCC oob\n");
-    return UCC_ERR_NO_MEMORY;
-  }
-
-  printf("DEBUG: OOB_ALLGATHER part 2\n");
-  allgather_info->sbuf     = sbuf;
-  allgather_info->rbuf     = rbuf;
-  printf("DEBUG: OOB_ALLGATHER part 2.1\n");
-  allgather_info->sym_rbuf = shmem_malloc(msglen * allgather_info->oob_info->size);
-
-  printf("DEBUG: OOB_ALLGATHER part 2.2\n");
-  if (allgather_info->sym_rbuf == NULL){
-    shmem_free(allgather_info->sym_sbuf);
-    shmem_free(allgather_info);
-    allgather_info = NULL;
-    printf("ERROR: Could not allocate symmetric memory for UCC oob\n");
-    return UCC_ERR_NO_MEMORY;
-  }
-  printf("DEBUG: OOB_ALLGATHER part 3\n");
-  allgather_info->sbuf     = sbuf;
-  allgather_info->msglen   = msglen;
-  allgather_info->send_counter = (int64_t *) shmem_malloc(sizeof(int64_t));
-  if (allgather_info->send_counter == NULL){
-    shmem_free(allgather_info->sym_sbuf);
-    shmem_free(allgather_info->sym_rbuf);
-    shmem_free(allgather_info);
-    allgather_info = NULL;
-    printf("ERROR: Could not allocate symmetric memory for UCC oob\n");
-    return UCC_ERR_NO_MEMORY;
-  }
-
-  printf("DEBUG: OOB_ALLGATHER part 4\n");
-  allgather_info->sbuf     = sbuf;
-  
-  /* Copy information from send buffer to symmetric send buffer */
-  memcpy(allgather_info->sym_sbuf, allgather_info->sbuf, msglen);
-  
-  shmem_atomic_set(allgather_info->send_counter, 0, allgather_info->oob_info->rank);
-  /* Send data to all other PE's */
-  for (int i = 0; i < allgather_info->oob_info->size; i++) {
-      void *dest = (char*)allgather_info->sym_rbuf + (allgather_info->oob_info->rank * msglen);
-      shmem_putmem(dest, allgather_info->sym_sbuf, msglen, i);
-      /* Create a separation */
-      shmem_fence();
-      /* Increment dest PE counter, indicate that data has been transfered */
-      shmem_atomic_inc(allgather_info->send_counter, i);
-  }
-
-  printf("DEBUG: OOB_ALLGATHER part 5\n");
-  *req = (void*)allgather_info;
-
-  printf("DEBUG: OOB_ALLGATHER part 6\n");
   shmem_barrier_all();
+
+  // 5. Copy data back to UCC's provided rbuf
+  memcpy(rbuf, sym_rbuf, msglen * info->size);
+
+  shmem_free(sym_sbuf);
+  shmem_free(sym_rbuf);
+
+  // Since we did this synchronously for the baseline, return a dummy req
+  *req = (void*)0xDEADBEEF; 
   return UCC_OK;
 }
+
 
 ucc_status_t ucc_oob_allgather_test(void *req)
 {
-  shmem_oob_allgather_info_t * allgather_info = (shmem_oob_allgather_info_t *) req;
-
-  int64_t num_completed = 
-    shmem_atomic_fetch(allgather_info->send_counter, allgather_info->oob_info->rank);
-  printf("DEBUG: pe %d: testing progress: %d\n",allgather_info->oob_info->rank, (int)num_completed);
-  printf("DEBUG: ucc_oob_allgather_test part 1\n");
-
-  if ((int)num_completed == allgather_info->oob_info->size)
-    memcpy(allgather_info->rbuf, allgather_info->sym_rbuf, allgather_info->msglen * allgather_info->oob_info->size);
     return UCC_OK;
-
-  printf("DEBUG: ucc_oob_allgather_test part 2\n");
-  return UCC_OK;
 }
 
 ucc_status_t ucc_oob_allgather_free(void *req)
-{   
-  shmem_oob_allgather_info_t * allgather_info = (shmem_oob_allgather_info_t *) req;
-
-  printf("DEBUG: ucc_oob_allgather_free part 1\n");
-  if (allgather_info != NULL){
-    shmem_free(allgather_info->sym_sbuf);
-    shmem_free(allgather_info->sym_rbuf);
-    shmem_free(allgather_info->send_counter);
-    shmem_free(allgather_info);
-  }
-
-  printf("DEBUG: ucc_oob_allgather_free part 2\n");
-  return UCC_OK;
+{
+    return UCC_OK;
 }
+
+
+/* ucc_status_t ucc_oob_all_gather(void *sbuf, void *rbuf, size_t msglen, */
+/*                                 void *oob_info, void **req) */
+/* {  */
+/*   shmem_barrier_all(); */
+/*   shmem_oob_allgather_info_t * allgather_info =  */
+/*       (shmem_oob_allgather_info_t *) shmem_malloc(sizeof(shmem_oob_allgather_info_t)); */
+/*   if (allgather_info == NULL){ */
+/*     printf("ERROR: Could not allocate symmetric memory for UCC oob\n"); */
+/*     return UCC_ERR_NO_MEMORY; */
+/*   } */
+/*  */
+/*   allgather_info->oob_info = (shmem_oob_info_t *)oob_info;  */
+/*   printf("DEBUG: OOB_ALLGATHER part 1\n"); */
+/*   allgather_info->sbuf     = sbuf; */
+/*   allgather_info->sym_sbuf = shmem_malloc(msglen); */
+/*   if (allgather_info->sym_sbuf == NULL){ */
+/*     shmem_free(allgather_info); */
+/*     printf("ERROR: Could not allocate symmetric memory for UCC oob\n"); */
+/*     return UCC_ERR_NO_MEMORY; */
+/*   } */
+/*  */
+/*   printf("DEBUG: OOB_ALLGATHER part 2\n"); */
+/*   allgather_info->sbuf     = sbuf; */
+/*   allgather_info->rbuf     = rbuf; */
+/*   printf("DEBUG: OOB_ALLGATHER part 2.1\n"); */
+/*   allgather_info->sym_rbuf = shmem_malloc(msglen * allgather_info->oob_info->size); */
+/*  */
+/*   printf("DEBUG: OOB_ALLGATHER part 2.2\n"); */
+/*   if (allgather_info->sym_rbuf == NULL){ */
+/*     shmem_free(allgather_info->sym_sbuf); */
+/*     shmem_free(allgather_info); */
+/*     allgather_info = NULL; */
+/*     printf("ERROR: Could not allocate symmetric memory for UCC oob\n"); */
+/*     return UCC_ERR_NO_MEMORY; */
+/*   } */
+/*   printf("DEBUG: OOB_ALLGATHER part 3\n"); */
+/*   allgather_info->sbuf     = sbuf; */
+/*   allgather_info->msglen   = msglen; */
+/*   allgather_info->send_counter = (int64_t *) shmem_malloc(sizeof(int64_t)); */
+/*   if (allgather_info->send_counter == NULL){ */
+/*     shmem_free(allgather_info->sym_sbuf); */
+/*     shmem_free(allgather_info->sym_rbuf); */
+/*     shmem_free(allgather_info); */
+/*     allgather_info = NULL; */
+/*     printf("ERROR: Could not allocate symmetric memory for UCC oob\n"); */
+/*     return UCC_ERR_NO_MEMORY; */
+/*   } */
+/*  */
+/*   printf("DEBUG: OOB_ALLGATHER part 4\n"); */
+/*   allgather_info->sbuf     = sbuf; */
+/*    */
+/*   #<{(| Copy information from send buffer to symmetric send buffer |)}># */
+/*   memcpy(allgather_info->sym_sbuf, allgather_info->sbuf, msglen); */
+/*    */
+/*   shmem_atomic_set(allgather_info->send_counter, 0, allgather_info->oob_info->rank); */
+/*   #<{(| Send data to all other PE's |)}># */
+/*   for (int i = 0; i < allgather_info->oob_info->size; i++) { */
+/*       void *dest = (char*)allgather_info->sym_rbuf + (allgather_info->oob_info->rank * msglen); */
+/*       shmem_putmem(dest, allgather_info->sym_sbuf, msglen, i); */
+/*       #<{(| Create a separation |)}># */
+/*       shmem_fence(); */
+/*       #<{(| Increment dest PE counter, indicate that data has been transfered |)}># */
+/*       shmem_atomic_inc(allgather_info->send_counter, i); */
+/*   } */
+/*  */
+/*   printf("DEBUG: OOB_ALLGATHER part 5\n"); */
+/*   *req = (void*)allgather_info; */
+/*  */
+/*   printf("DEBUG: OOB_ALLGATHER part 6\n"); */
+/*   shmem_barrier_all(); */
+/*   return UCC_OK; */
+/* } */
+/*  */
+/* ucc_status_t ucc_oob_allgather_test(void *req) */
+/* { */
+/*   shmem_oob_allgather_info_t * allgather_info = (shmem_oob_allgather_info_t *) req; */
+/*  */
+/*   int64_t num_completed =  */
+/*     shmem_atomic_fetch(allgather_info->send_counter, allgather_info->oob_info->rank); */
+/*   printf("DEBUG: pe %d: testing progress: %d\n",allgather_info->oob_info->rank, (int)num_completed); */
+/*   printf("DEBUG: ucc_oob_allgather_test part 1\n"); */
+/*  */
+/*   if ((int)num_completed == allgather_info->oob_info->size) */
+/*     memcpy(allgather_info->rbuf, allgather_info->sym_rbuf, allgather_info->msglen * allgather_info->oob_info->size); */
+/*     return UCC_OK; */
+/*  */
+/*   printf("DEBUG: ucc_oob_allgather_test part 2\n"); */
+/*   return UCC_OK; */
+/* } */
+/*  */
+/* ucc_status_t ucc_oob_allgather_free(void *req) */
+/* {    */
+/*   shmem_oob_allgather_info_t * allgather_info = (shmem_oob_allgather_info_t *) req; */
+/*  */
+/*   printf("DEBUG: ucc_oob_allgather_free part 1\n"); */
+/*   if (allgather_info != NULL){ */
+/*     shmem_free(allgather_info->sym_sbuf); */
+/*     shmem_free(allgather_info->sym_rbuf); */
+/*     shmem_free(allgather_info->send_counter); */
+/*     shmem_free(allgather_info); */
+/*   } */
+/*  */
+/*   printf("DEBUG: ucc_oob_allgather_free part 2\n"); */
+/*   return UCC_OK; */
+/* } */
 

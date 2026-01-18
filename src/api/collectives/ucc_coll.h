@@ -24,7 +24,6 @@ typedef struct {
   shmem_oob_info_t *oob_info;
 } shmem_oob_allgather_info_t;
 
-
 ucc_status_t ucc_oob_all_gather(void *sbuf, void *rbuf, size_t msglen,
                                 void *coll_info, void **req);
 
