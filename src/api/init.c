@@ -53,6 +53,11 @@
  * subsystems.
  */
 static void finalize_helper(void) {
+  
+#ifdef HAVE_UCC
+/*  shmem_ucc_coll_finalize(); */
+#endif /* HAVE_UCC */
+
   threadwrap_thread_t this;
 
   /* do nothing if multiple finalizes */
@@ -178,6 +183,9 @@ inline static int init_thread_helper(int requested, int *provided) {
 
   shmem_barrier_all();
 
+#ifdef HAVE_UCC
+  shmem_ucc_coll_setup();
+#endif /* HAVE_UCC */
   /* just declare success */
   return 0;
 }

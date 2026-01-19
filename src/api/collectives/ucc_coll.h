@@ -14,22 +14,38 @@ typedef struct {
     int size;
 } shmem_oob_info_t;
 
-typedef struct {
-  void * sbuf;
-  void * sym_sbuf;
-  void * rbuf;
-  void * sym_rbuf;
-  size_t msglen;
-  int64_t *send_counter;
-  shmem_oob_info_t *oob_info;
-} shmem_oob_allgather_info_t;
+// typedef struct {
+//   void * sbuf;
+//   void * sym_sbuf;
+//   void * rbuf;
+//   void * sym_rbuf;
+//   size_t msglen;
+//   int64_t *send_counter;
+//   shmem_oob_info_t *oob_info;
+// } shmem_oob_allgather_info_t;
 
-ucc_status_t ucc_oob_all_gather(void *sbuf, void *rbuf, size_t msglen,
+typedef struct {
+  void * global_work_buffer;
+  ucc_lib_h lib;
+  int is_lib_initialized;
+  ucc_team_h team_handle; 
+  ucc_context_h context_handle;
+  ucc_mem_map_t *map_segments;
+  shmem_oob_info_t oob_info;
+} ucc_coll_component_t;
+
+extern ucc_coll_component_t shmem_ucc_coll;
+
+ucc_status_t ucc_oob_allgather(void *sbuf, void *rbuf, size_t msglen,
                                 void *coll_info, void **req);
 
 ucc_status_t ucc_oob_allgather_test(void *req);
 
 ucc_status_t ucc_oob_allgather_free(void *req);
+
+void shmem_ucc_coll_setup ();
+
+void shmem_ucc_coll_finalize();
 
 int ucc_alltoallmem(shmem_team_t team, void *dest,
                     const void *source, size_t nelems);

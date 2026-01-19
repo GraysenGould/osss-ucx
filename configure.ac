@@ -210,6 +210,12 @@ AC_OUTPUT
 # Courtesy info
 #
 
+# CFLAGS="-g -O0 -fsanitize=address -fno-omit-frame-pointer"
+CFLAGS="-g -O0" 
+AC_SUBST([CFLAGS])
+CXXFLAGS="-g -O0" 
+AC_SUBST([CXXFLAGS])
+
 echo
 echo "Summary"
 echo "-------"
