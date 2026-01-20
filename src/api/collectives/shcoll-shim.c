@@ -215,7 +215,7 @@ int shmem_alltoallmem(shmem_team_t team, void *dest, const void *source,
                       size_t nelems) {
   logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest, source,
          nelems);
-  printf("DEBUG: Running UCC_ALLTOALLMEM!!!\n");
+  //printf("DEBUG: Running UCC_ALLTOALLMEM!!!\n");
   ucc_alltoallmem(team, dest, source, nelems);
 }
 

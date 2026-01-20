@@ -55,7 +55,7 @@
 static void finalize_helper(void) {
   
 #ifdef HAVE_UCC
-/*  shmem_ucc_coll_finalize(); */
+ shmem_ucc_coll_finalize();
 #endif /* HAVE_UCC */
 
   threadwrap_thread_t this;

@@ -19,7 +19,7 @@ void shmem_ucc_coll_setup () {
 
   ucc_lib_config_h     lib_config;
   ucc_lib_params_t     lib_params;
-  shmem_ucc_coll.is_lib_initialized = true;
+  shmem_ucc_coll.is_lib_initialized = 1;
 
   lib_params.mask = UCC_LIB_PARAM_FIELD_THREAD_MODE;
   lib_params.thread_mode = UCC_THREAD_SINGLE;
@@ -30,7 +30,7 @@ void shmem_ucc_coll_setup () {
   }
 
   if (UCC_OK != ucc_init(&lib_params, lib_config, &shmem_ucc_coll.lib)){
-    printf("UCC FAILURE: Could not initialize ucc library\n");
+    // printf("UCC FAILURE: Could not initialize ucc library\n");
     return;
   }
   ucc_lib_config_release(lib_config);
@@ -41,7 +41,7 @@ void shmem_ucc_coll_setup () {
                         UCC_LIB_ATTR_FIELD_COLL_TYPES;
 
   if (UCC_OK != ucc_lib_get_attr(shmem_ucc_coll.lib, &lib_attributes)){
-    printf("Error Getting Library Attributes\n");
+    //printf("Error Getting Library Attributes\n");
     return ;
   }
   
@@ -53,11 +53,11 @@ void shmem_ucc_coll_setup () {
 
   shmem_barrier_all();
 
-  printf("DEBUG: Part 2\n");
+  // printf("DEBUG: Part 2\n");
   shmem_ucc_coll.oob_info.rank = shmem_my_pe();
   shmem_ucc_coll.oob_info.size = shmem_n_pes();
   
-  printf("DEBUG: Part 3\n");
+  // printf("DEBUG: Part 3\n");
   /* Create Global Work Buffer with plenty of space (x2 we need) */
   ucc_context_attr_t ctx_attr;
   ctx_attr.mask = UCC_CONTEXT_ATTR_FIELD_WORK_BUFFER_SIZE;
@@ -84,7 +84,7 @@ void shmem_ucc_coll_setup () {
   context_params.mem_params.segments   = shmem_ucc_coll.map_segments;
   context_params.mem_params.n_segments = n_segments;
 
-  printf("DEBUG: Part 5\n");
+  // printf("DEBUG: Part 5\n");
   ucc_context_config_read(shmem_ucc_coll.lib, NULL, &context_config);
 
   status = ucc_context_create(shmem_ucc_coll.lib, &context_params, context_config, &shmem_ucc_coll.context_handle);
@@ -105,7 +105,7 @@ void shmem_ucc_coll_setup () {
   team_oob_coll.oob_ep    = shmem_ucc_coll.oob_info.rank;
 
   // TODO: use ucc_ep_map_t in the future
-  printf("DEBUG: Part 7\n");
+  /* printf("DEBUG: Part 7\n"); */
   /* Create Team Context */   
   const ucc_team_params_t team_params = {
     .mask = UCC_TEAM_PARAM_FIELD_OOB | UCC_TEAM_PARAM_FIELD_EP | UCC_TEAM_PARAM_FIELD_EP_RANGE | UCC_TEAM_PARAM_FIELD_FLAGS,
@@ -118,11 +118,11 @@ void shmem_ucc_coll_setup () {
   uint32_t num_contexts = 1; // might have to change with multiple contexts
   if (UCC_OK != (status = ucc_team_create_post(&shmem_ucc_coll.context_handle, num_contexts, 
         &team_params, &shmem_ucc_coll.team_handle))){
-    printf("ERROR: team_create_post failed: %d\n", status);
+    /* printf("ERROR: team_create_post failed: %d\n", status); */
     return;
   }
 
-  printf("DEBUG: Part 8\n");
+  //printf("DEBUG: Part 8\n");
   while (UCC_INPROGRESS == 
       (status = ucc_team_create_test(shmem_ucc_coll.team_handle))) {}
   if (UCC_OK != status) {
@@ -137,19 +137,19 @@ void shmem_ucc_coll_finalize(){
       printf("ERROR: could not destroy ucc team\n");
       return;
     }
-    printf("DEBUG: Part 13\n");
+    //printf("DEBUG: Part 13\n");
     if (UCC_OK != ucc_context_destroy(shmem_ucc_coll.context_handle)){
       printf("ERROR: Could not destroy ucc_context\n");
       return;
     }
-    printf("DEBUG: Part 14\n");
+    //printf("DEBUG: Part 14\n");
     shmem_free(shmem_ucc_coll.map_segments);
-    printf("DEBUG: Part 14.5\n");
+    //printf("DEBUG: Part 14.5\n");
     shmem_free(shmem_ucc_coll.global_work_buffer);
-    printf("DEBUG: Part 15\n");
+    //printf("DEBUG: Part 15\n");
     ucc_finalize(shmem_ucc_coll.lib);
-    printf("DEBUG: Part 16\n");
-    shmem_ucc_coll.is_lib_initialized = false;
+    //printf("DEBUG: Part 16\n");
+    shmem_ucc_coll.is_lib_initialized = 0;
   }
 }
 
@@ -178,10 +178,10 @@ inline static void ucc_alltoallmem_helper(
     .src.info = coll_src_buffer_info,
     .dst.info = coll_dst_buffer_info,
     .global_work_buffer = shmem_ucc_coll.global_work_buffer,
-    .flags = 0,
+    .flags = UCC_COLL_ARGS_FLAG_MEM_MAPPED_BUFFERS, // delete flag if want to skip memory pre-registration
   };
   // .flags = UCC_COLL_ARGS_FLAG_MEM_MAPPED_BUFFERS, // delete flag if want to skip memory pre-registration
-  printf("DEBUG: Part 9\n");
+  //printf("DEBUG: Part 9\n");
   ucc_coll_req_h coll_handle;
   if (UCC_OK != (status = 
         ucc_collective_init(&coll_args, &coll_handle, shmem_ucc_coll.team_handle))){
@@ -193,16 +193,67 @@ inline static void ucc_alltoallmem_helper(
     return;
   }
   
-  printf("DEBUG: Part 10\n");
+  //printf("DEBUG: Part 10\n");
   /* poll operation until done */
   while(ucc_collective_test(coll_handle) == UCC_INPROGRESS) {
     /* Drive Collective Progress */
     ucc_context_progress(shmem_ucc_coll.context_handle);
   }
 
-  printf("DEBUG: Part 11\n");
+  //printf("DEBUG: Part 11\n");
   ucc_collective_finalize(coll_handle); 
-  printf("DEBUG: Part 12\n");
+  //printf("DEBUG: Part 12\n");
+}
+
+inline static void ucc_alltoallmem_helper_register(
+      void *dest, const void *source, size_t nelems, int PE_start,
+      int logPE_stride, int PE_size, long *pSync) {
+  ucc_status_t status;
+  ucc_coll_buffer_info_t coll_src_buffer_info =  {
+    .buffer = source,
+    .count = nelems * PE_size,
+    .datatype = UCC_DT_UINT8,
+    .mem_type = UCC_MEMORY_TYPE_HOST 
+  };
+
+  ucc_coll_buffer_info_t coll_dst_buffer_info =  {
+    .buffer = dest,
+    .count = nelems * PE_size,
+    .datatype = UCC_DT_UINT8,
+    .mem_type = UCC_MEMORY_TYPE_HOST 
+  };
+
+  ucc_coll_args_t coll_args = {
+    .mask = UCC_COLL_ARGS_FIELD_FLAGS | UCC_COLL_ARGS_FIELD_GLOBAL_WORK_BUFFER,
+    .coll_type = UCC_COLL_TYPE_ALLTOALL,
+    .src.info = coll_src_buffer_info,
+    .dst.info = coll_dst_buffer_info,
+    .global_work_buffer = shmem_ucc_coll.global_work_buffer,
+    .flags = 0,
+  };
+  // .flags = UCC_COLL_ARGS_FLAG_MEM_MAPPED_BUFFERS, // delete flag if want to skip memory pre-registration
+  //printf("DEBUG: Part 9\n");
+  ucc_coll_req_h coll_handle;
+  if (UCC_OK != (status = 
+        ucc_collective_init(&coll_args, &coll_handle, shmem_ucc_coll.team_handle))){
+    printf("Could Not Initalize UCC collective. Status: %d\n", status);
+    return;
+  }
+  if (UCC_OK != ucc_collective_post(coll_handle)){
+    printf("Could No Post UCC collective.\n");
+    return;
+  }
+  
+  //printf("DEBUG: Part 10\n");
+  /* poll operation until done */
+  while(ucc_collective_test(coll_handle) == UCC_INPROGRESS) {
+    /* Drive Collective Progress */
+    ucc_context_progress(shmem_ucc_coll.context_handle);
+  }
+
+  //printf("DEBUG: Part 11\n");
+  ucc_collective_finalize(coll_handle); 
+  //printf("DEBUG: Part 12\n");
 }
 
 /**
