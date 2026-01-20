@@ -210,7 +210,7 @@ AC_OUTPUT
 # Courtesy info
 #
 
-# CFLAGS="-g -O0 -fsanitize=address -fno-omit-frame-pointer"
+# TEMPORARY, FOR VALGRIND
 CFLAGS="-g -O0" 
 AC_SUBST([CFLAGS])
 CXXFLAGS="-g -O0" 

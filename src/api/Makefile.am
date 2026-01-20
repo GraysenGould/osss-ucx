@@ -86,7 +86,10 @@ MY_SOURCES            += \
 MY_SOURCES            += \
 				collectives/shcoll-shim.c \
 				collectives/table.c       \
-				collectives/ucc_coll.c
+				collectives/ucc/ucc.c     \
+				collectives/ucc/alltoall.c
+
+# TODO: refactor so that collectives is own subdirectory
 
 SUBDIRS                = 	atomics
 

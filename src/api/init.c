@@ -19,7 +19,7 @@
 #include "threading.h"
 #include "shmem_mutex.h"
 #include "collectives/collectives.h"
-#include "collectives/ucc_coll.h"
+#include "collectives/ucc/ucc.h"
 #include "module.h"
 #include "shmem/api.h"
 
