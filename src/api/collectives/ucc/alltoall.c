@@ -13,7 +13,7 @@
 #include <math.h>
 
 /* ------ UCC Collective Operation ------- */
-inline static void ucc_alltoallmem_helper(
+inline static void ucc_alltoall_helper(
       void *dest, const void *source, size_t nelems, int PE_start,
       int logPE_stride, int PE_size, long *pSync) {
   ucc_status_t status;
@@ -64,10 +64,53 @@ inline static void ucc_alltoallmem_helper(
 }
 
 /**
+ * @brief Helper macro to define typed alltoall implementations
+ *
+ * @param _algo Algorithm name
+ * @param _type Data type
+ * @param _typename Type name string
+ *
+ * FIXME: THESE COLLECTIVES NEED TO RETURN NON ZERO IF THEY FAIL
+ */
+#define UCC_ALLTOALL_TYPE_DEFINITION(_type, _typename)                      \
+  int ucc_##_typename##_alltoall(                                              \
+      shmem_team_t team, _type *dest, const _type *source, size_t nelems) {    \
+    SHMEMU_CHECK_INIT();                                                       \
+    SHMEMU_CHECK_TEAM_VALID(team);                                             \
+    shmemc_team_h team_h = (shmemc_team_h)team;                                \
+    SHMEMU_CHECK_TEAM_STRIDE(team_h->stride, __func__);                        \
+    SHMEMU_CHECK_SYMMETRIC(dest, sizeof(_type) * nelems * team_h->nranks);     \
+    SHMEMU_CHECK_SYMMETRIC(source, sizeof(_type) * nelems * team_h->nranks);   \
+    SHMEMU_CHECK_BUFFER_OVERLAP(dest, source,                                  \
+                                sizeof(_type) * nelems * team_h->nranks,       \
+                                sizeof(_type) * nelems * team_h->nranks);      \
+    SHMEMU_CHECK_NULL(shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE),  \
+                      "team_h->pSyncs[COLLECTIVE]");                           \
+                                                                               \
+    ucc_alltoall_helper(                                                       \
+        dest, source, nelems * sizeof(_type), team_h->start,                   \
+        (team_h->stride > 0) ? (int)log2((double)team_h->stride) : 0,          \
+        team_h->nranks,                                                        \
+        shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE));               \
+                                                                               \
+    shmemc_team_reset_psync(team_h, SHMEMC_PSYNC_COLLECTIVE);                  \
+                                                                               \
+    return 0;                                                                  \
+  }
+
+#define DEFINE_ALLTOALL_TYPES(_type, _typename)                                \
+  UCC_ALLTOALL_TYPE_DEFINITION(_type, _typename)
+
+SHMEM_STANDARD_RMA_TYPE_TABLE(DEFINE_ALLTOALL_TYPES)
+#undef DEFINE_ALLTOALL_TYPES
+
+// UCC_ALLTOALL_TYPE_DEFINITION(float, float)
+
+/**
  * @brief Helper macro to define alltoallmem implementations
  *
  */
-#define UCC_ALLTOALLMEM_DEFINITION(_placeholder)                               \
+#define UCC_ALLTOALLMEM_DEFINITION()                                           \
   int ucc_alltoallmem(shmem_team_t team, void *dest,                           \
                                  const void *source, size_t nelems) {          \
     SHMEMU_CHECK_INIT();                                                       \
@@ -82,15 +125,15 @@ inline static void ucc_alltoallmem_helper(
                                 nelems * team_h->nranks);                      \
     SHMEMU_CHECK_NULL(shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE),  \
                       "team_h->pSyncs[COLLECTIVE]");                           \
-    ucc_alltoallmem_helper(                                                       \
+    ucc_alltoall_helper(                                                       \
         dest, source, nelems, team_h->start,                                   \
         (team_h->stride > 0) ? (int)log2((double)team_h->stride) : 0,          \
         team_h->nranks,                                                        \
-        shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE));                \
+        shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE));               \
                                                                                \
     shmemc_team_reset_psync(team_h, SHMEMC_PSYNC_COLLECTIVE);                  \
                                                                                \
     return 0;                                                                  \
   }
 
-UCC_ALLTOALLMEM_DEFINITION(placeholder)
+UCC_ALLTOALLMEM_DEFINITION()

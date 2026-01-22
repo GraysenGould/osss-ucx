@@ -15,6 +15,7 @@
 #include "thispe.h"
 #include "shmemu.h"
 #include "collectives/table.h"
+//#include "collectives/ucc/collectives/alltoall.h"
 #include "collectives/ucc/ucc.h"
 #include "shmem/teams.h"
 
@@ -188,7 +189,7 @@ void collectives_finalize(void) { return; }
                                    const _type *source, size_t nelems) {       \
     logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest,       \
            source, nelems);                                                    \
-    TYPED_CALL(alltoall_type, #_typename, team, dest, source, nelems);         \
+    ucc_##_typename##_alltoall(team, (float *)dest, (float *)source, nelems);          \
   }
 
 #define DECL_SHIM_ALLTOALL(_type, _typename)                                   \
@@ -215,7 +216,6 @@ int shmem_alltoallmem(shmem_team_t team, void *dest, const void *source,
                       size_t nelems) {
   logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest, source,
          nelems);
-  //printf("DEBUG: Running UCC_ALLTOALLMEM!!!\n");
   ucc_alltoallmem(team, dest, source, nelems);
 }
 

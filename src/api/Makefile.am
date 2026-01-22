@@ -21,7 +21,7 @@ atomics_cppflags       = -I$(top_srcdir)/src/$(shmemc_dir)
 
 MY_INCLUDE             = -I../../include \
 				-I$(top_srcdir)/include \
-				-I$(top_srcdir)/src/shcoll/src
+				-I$(top_srcdir)/src/shcoll/src 
 
 all_cppflags           = $(atomics_cppflags) \
 				$(shmemc_cppflags) \
@@ -83,11 +83,11 @@ MY_SOURCES            += \
 				deprecated/collectives.c
 
 # Collectives files
-MY_SOURCES            += \
-				collectives/shcoll-shim.c \
-				collectives/table.c       \
-				collectives/ucc/ucc.c     \
-				collectives/ucc/alltoall.c
+MY_SOURCES            +=            \
+				collectives/ucc/ucc.c       \
+				collectives/ucc/alltoall.c  \
+				collectives/shcoll-shim.c   \
+				collectives/table.c  
 
 # TODO: refactor so that collectives is own subdirectory
 
