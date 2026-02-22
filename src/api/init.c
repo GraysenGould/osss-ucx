@@ -55,7 +55,7 @@
 static void finalize_helper(void) {
   
 #ifdef HAVE_UCC
- shmem_ucc_coll_finalize();
+  shmem_ucc_coll_finalize();
 #endif /* HAVE_UCC */
 
   threadwrap_thread_t this;
@@ -183,9 +183,6 @@ inline static int init_thread_helper(int requested, int *provided) {
 
   shmem_barrier_all();
 
-#ifdef HAVE_UCC
-  shmem_ucc_coll_setup();
-#endif /* HAVE_UCC */
   /* just declare success */
   return 0;
 }
@@ -220,7 +217,12 @@ int shmem_init_thread(int requested, int *provided) {
  *
  * Initialize the OpenSHMEM library with single threading level.
  */
-void shmem_init(void) { (void)init_thread_helper(SHMEM_THREAD_SINGLE, NULL); }
+void shmem_init(void) { 
+  (void)init_thread_helper(SHMEM_THREAD_SINGLE, NULL); 
+#ifdef HAVE_UCC
+  shmem_ucc_coll_setup();
+#endif /* HAVE_UCC */
+}
 
 #ifdef PR470
 

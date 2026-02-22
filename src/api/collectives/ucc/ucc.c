@@ -12,39 +12,16 @@
 #include <math.h>
 
 /* Globally Visible Handle for UCC collectives */
-ucc_coll_component_t shmem_ucc_coll;
-
-/** @breif super simple barrier helper for ucc bootstrapping
- *
- */
-/* void ucc_barrier_helper(long * pSync){  */
-/*   const int me = shmem_my_pe(); */
-/*   const int PE_size = shmem_n_pes(); */
-/*   shmem_long_p(pSync, 0, me); */
-/*   int pe; */
-/*  */
-/*   if (me == 0) { */
-/*     #<{(| wait for the rest of the AS to poke me |)}># */
-/*     shmem_long_wait_until(pSync, SHMEM_CMP_EQ,PE_size - 1); */
-/*     #<{(| send acks out |)}># */
-/*     for (pe = 1; pe < PE_size; ++pe) { */
-/*       shmem_long_p(pSync, 1, pe); */
-/*     } */
-/*   } else { */
-/*     shmem_long_atomic_inc(pSync, 0); */
-/*     shmem_long_wait_until(pSync, SHMEM_CMP_NE, 0); */
-/*   } */
-/*   shmem_long_p(pSync, 0, me); */
-/*   shmem_long_wait_until(pSync, SHMEM_CMP_EQ, 0); */
-/* } */
-
-
+ucc_coll_component_t shmem_ucc_coll = {
+  .libucc_initialized = 0,
+  .ucc_ctx_initialized = 0
+};
 
 void shmem_ucc_coll_setup () {
 
   ucc_lib_config_h     lib_config;
   ucc_lib_params_t     lib_params;
-  shmem_ucc_coll.is_lib_initialized = 1;
+  shmem_ucc_coll.libucc_initialized = 1;
 
   lib_params.mask = UCC_LIB_PARAM_FIELD_THREAD_MODE;
   lib_params.thread_mode = UCC_THREAD_SINGLE;
@@ -75,6 +52,8 @@ void shmem_ucc_coll_setup () {
   ucc_context_params_t  context_params;
   ucc_context_config_h  context_config;
   ucc_status_t          status;
+
+  shmem_barrier_all();
 
   // printf("DEBUG: Part 2\n");
   shmem_ucc_coll.oob_info.rank = shmem_my_pe();
@@ -155,7 +134,7 @@ void shmem_ucc_coll_setup () {
 }
 
 void shmem_ucc_coll_finalize(){
-  if (shmem_ucc_coll.is_lib_initialized){
+  if (shmem_ucc_coll.libucc_initialized){
     if (UCC_OK != ucc_team_destroy(shmem_ucc_coll.team_handle)){
       printf("ERROR: could not destroy ucc team\n");
       return;
@@ -172,9 +151,10 @@ void shmem_ucc_coll_finalize(){
     //printf("DEBUG: Part 15\n");
     ucc_finalize(shmem_ucc_coll.lib);
     //printf("DEBUG: Part 16\n");
-    shmem_ucc_coll.is_lib_initialized = 0;
+    shmem_ucc_coll.libucc_initialized = 0;
   }
 }
+
 
 ucc_status_t ucc_oob_allgather(void *sbuf, void *rbuf, size_t msglen,
                                 void *coll_info, void **req)
@@ -184,8 +164,6 @@ ucc_status_t ucc_oob_allgather(void *sbuf, void *rbuf, size_t msglen,
   // UCC provides 'sbuf' and 'rbuf' which are NOT symmetric.
   void *sym_sbuf = shmem_malloc(msglen);
   void *sym_rbuf = shmem_malloc(msglen * info->size);
-  void *pSync = shmem_calloc(sizeof(long), 1);
-  //printf("sym_rbuf(%p) = msglen(%d) * info->size(%d)\n", sym_rbuf, msglen, info->size);
 
   // 1. Copy UCC's private data to symmetric memory
   memcpy(sym_sbuf, sbuf, msglen);
@@ -193,7 +171,6 @@ ucc_status_t ucc_oob_allgather(void *sbuf, void *rbuf, size_t msglen,
   // 2. Perform the Put-based Allgather (as written before)
   for (int i = 0; i < info->size; i++) {
       void *dest = (char*)sym_rbuf + (info->rank * msglen);
-      //printf("dest (%p) = sym_rbuf(%p) + info->rank(%d) * msglen(%d)\n", dest, sym_rbuf, info->rank, msglen);
       shmem_putmem(dest, sym_sbuf, msglen, i);
   }
   shmem_barrier_all();  
@@ -202,7 +179,6 @@ ucc_status_t ucc_oob_allgather(void *sbuf, void *rbuf, size_t msglen,
 
   shmem_free(sym_sbuf);
   shmem_free(sym_rbuf);
-  shmem_free(pSync);
 
   // Since we did this synchronously for the baseline, return a dummy req
   *req = (void*)0xDEADBEEF; 

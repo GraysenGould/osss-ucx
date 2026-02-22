@@ -189,7 +189,7 @@ void collectives_finalize(void) { return; }
                                    const _type *source, size_t nelems) {       \
     logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest,       \
            source, nelems);                                                    \
-    ucc_##_typename##_alltoall(team, (float *)dest, (float *)source, nelems);          \
+    ucc_##_typename##_alltoall(team, dest, source, nelems);                    \
   }
 
 #define DECL_SHIM_ALLTOALL(_type, _typename)                                   \
@@ -216,7 +216,9 @@ int shmem_alltoallmem(shmem_team_t team, void *dest, const void *source,
                       size_t nelems) {
   logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest, source,
          nelems);
+#ifdef WITH_UCC
   ucc_alltoallmem(team, dest, source, nelems);
+#endif
 }
 
 #ifdef ENABLE_PSHMEM

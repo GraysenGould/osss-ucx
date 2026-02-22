@@ -16,6 +16,7 @@
 inline static void ucc_alltoall_helper(
       void *dest, const void *source, size_t nelems, int PE_start,
       int logPE_stride, int PE_size, long *pSync) {
+  printf("DEBUG: ucc_alltoall helper part 1\n");
   ucc_status_t status;
   ucc_coll_buffer_info_t coll_src_buffer_info =  {
     .buffer = source,
@@ -24,6 +25,7 @@ inline static void ucc_alltoall_helper(
     .mem_type = UCC_MEMORY_TYPE_HOST 
   };
 
+  printf("DEBUG: ucc_alltoall helper part 2\n");
   ucc_coll_buffer_info_t coll_dst_buffer_info =  {
     .buffer = dest,
     .count = nelems * PE_size,
@@ -31,6 +33,7 @@ inline static void ucc_alltoall_helper(
     .mem_type = UCC_MEMORY_TYPE_HOST 
   };
 
+  printf("DEBUG: ucc_alltoall helper part 3\n");
   ucc_coll_args_t coll_args = {
     .mask = UCC_COLL_ARGS_FIELD_FLAGS | UCC_COLL_ARGS_FIELD_GLOBAL_WORK_BUFFER,
     .coll_type = UCC_COLL_TYPE_ALLTOALL,
@@ -39,28 +42,33 @@ inline static void ucc_alltoall_helper(
     .global_work_buffer = shmem_ucc_coll.global_work_buffer,
     .flags = UCC_COLL_ARGS_FLAG_MEM_MAPPED_BUFFERS, // delete flag if want to skip memory pre-registration
   };
-  //printf("DEBUG: Part 9\n");
+  
+  printf("DEBUG: ucc_alltoall helper part 4\n");
   ucc_coll_req_h coll_handle;
   if (UCC_OK != (status = 
         ucc_collective_init(&coll_args, &coll_handle, shmem_ucc_coll.team_handle))){
     printf("Could Not Initalize UCC collective. Status: %d\n", status);
     return;
   }
+  
+  printf("DEBUG: ucc_alltoall helper part 5\n");
   if (UCC_OK != ucc_collective_post(coll_handle)){
     printf("Could No Post UCC collective.\n");
     return;
   }
   
-  //printf("DEBUG: Part 10\n");
+  printf("DEBUG: ucc_alltoall helper part 6\n");
   /* poll operation until done */
   while(ucc_collective_test(coll_handle) == UCC_INPROGRESS) {
     /* Drive Collective Progress */
     ucc_context_progress(shmem_ucc_coll.context_handle);
   }
+  
+  printf("DEBUG: ucc_alltoall helper part 7\n");
 
-  //printf("DEBUG: Part 11\n");
   ucc_collective_finalize(coll_handle); 
-  //printf("DEBUG: Part 12\n");
+  printf("DEBUG: ucc_alltoall helper part 8\n");
+  
 }
 
 /**
@@ -103,8 +111,6 @@ inline static void ucc_alltoall_helper(
 
 SHMEM_STANDARD_RMA_TYPE_TABLE(DEFINE_ALLTOALL_TYPES)
 #undef DEFINE_ALLTOALL_TYPES
-
-// UCC_ALLTOALL_TYPE_DEFINITION(float, float)
 
 /**
  * @brief Helper macro to define alltoallmem implementations

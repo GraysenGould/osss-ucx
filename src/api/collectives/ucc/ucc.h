@@ -5,6 +5,19 @@
 #include <stdio.h>
 #include <shmem.h>
 
+#define UCC_DEBUG 1
+
+#ifdef UCC_DEBUG
+#define UCC_LOG_DEBUG(_action, _function)            \
+  do {                                                \
+   printf("DEBUG: %s in %s\n",_action, _function);     \
+  }while(0);
+#else
+#define UCC_LOG_DEBUG(_action, _function)            \
+  do {                                                \
+  }while(0);
+#endif
+
 typedef struct {
     int rank;
     int size;
@@ -13,12 +26,17 @@ typedef struct {
 typedef struct {
   void * global_work_buffer;
   ucc_lib_h lib;
-  int is_lib_initialized;
+  int libucc_initialized;
+  int ucc_ctx_initialized;
   ucc_team_h team_handle; 
   ucc_context_h context_handle;
   ucc_mem_map_t *map_segments;
   shmem_oob_info_t oob_info;
+  ucc_lib_params_t lib_params;
+  ucc_context_params_t context_params;
+  ucc_context_attr_t ctx_attr;
 } ucc_coll_component_t;
+
 
 extern ucc_coll_component_t shmem_ucc_coll;
 
