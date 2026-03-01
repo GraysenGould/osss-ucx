@@ -14,14 +14,12 @@
 /* Globally Visible Handle for UCC collectives */
 ucc_coll_component_t shmem_ucc_coll = {
   .libucc_initialized = 0,
-  .ucc_ctx_initialized = 0
 };
 
 void shmem_ucc_coll_setup () {
 
   ucc_lib_config_h     lib_config;
   ucc_lib_params_t     lib_params;
-  shmem_ucc_coll.libucc_initialized = 1;
 
   lib_params.mask = UCC_LIB_PARAM_FIELD_THREAD_MODE;
   lib_params.thread_mode = UCC_THREAD_SINGLE;
@@ -85,6 +83,7 @@ void shmem_ucc_coll_setup () {
   context_params.oob.oob_ep            = shmem_ucc_coll.oob_info.rank;
   context_params.mem_params.segments   = shmem_ucc_coll.map_segments;
   context_params.mem_params.n_segments = n_segments;
+  context_params.type = UCC_CONTEXT_SHARED;
 
   // printf("DEBUG: Part 5\n");
   ucc_context_config_read(shmem_ucc_coll.lib, NULL, &context_config);
@@ -96,9 +95,14 @@ void shmem_ucc_coll_setup () {
   }
 
   ucc_context_config_release(context_config);
+  shmem_ucc_coll.libucc_initialized = 1;
+}
+
+void shmem_ucc_team_setup(ucc_team_h * team_handle){
   /* ------------ CREATE UCC TEAMS --------------- */
-  
+  ucc_status_t status; 
   ucc_team_oob_coll_t       team_oob_coll;
+  /* just use globally available informaotion for each team */
   team_oob_coll.allgather = ucc_oob_allgather;
   team_oob_coll.req_test  = ucc_oob_allgather_test;
   team_oob_coll.req_free  = ucc_oob_allgather_free;
@@ -119,38 +123,36 @@ void shmem_ucc_coll_setup () {
 
   uint32_t num_contexts = 1; // might have to change with multiple contexts
   if (UCC_OK != (status = ucc_team_create_post(&shmem_ucc_coll.context_handle, num_contexts, 
-        &team_params, &shmem_ucc_coll.team_handle))){
+        &team_params, team_handle))){
     /* printf("ERROR: team_create_post failed: %d\n", status); */
     return;
   }
 
   //printf("DEBUG: Part 8\n");
   while (UCC_INPROGRESS == 
-      (status = ucc_team_create_test(shmem_ucc_coll.team_handle))) {}
+      (status = ucc_team_create_test(*team_handle))) {}
   if (UCC_OK != status) {
     printf("ERROR: ucc_team_create_test failed: %d\n", status);
     return;
   }
 }
 
+void shmem_ucc_team_finalize(ucc_team_h team_handle){
+  if (UCC_OK != ucc_team_destroy(team_handle)){
+    printf("ERROR: could not destroy ucc team\n");
+    return;
+  }
+}
+
 void shmem_ucc_coll_finalize(){
   if (shmem_ucc_coll.libucc_initialized){
-    if (UCC_OK != ucc_team_destroy(shmem_ucc_coll.team_handle)){
-      printf("ERROR: could not destroy ucc team\n");
-      return;
-    }
-    //printf("DEBUG: Part 13\n");
     if (UCC_OK != ucc_context_destroy(shmem_ucc_coll.context_handle)){
       printf("ERROR: Could not destroy ucc_context\n");
       return;
     }
-    //printf("DEBUG: Part 14\n");
     shmem_free(shmem_ucc_coll.map_segments);
-    //printf("DEBUG: Part 14.5\n");
     shmem_free(shmem_ucc_coll.global_work_buffer);
-    //printf("DEBUG: Part 15\n");
     ucc_finalize(shmem_ucc_coll.lib);
-    //printf("DEBUG: Part 16\n");
     shmem_ucc_coll.libucc_initialized = 0;
   }
 }

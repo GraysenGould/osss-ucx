@@ -27,8 +27,7 @@ typedef struct {
   void * global_work_buffer;
   ucc_lib_h lib;
   int libucc_initialized;
-  int ucc_ctx_initialized;
-  ucc_team_h team_handle; 
+  int ucc_team_initialized;
   ucc_context_h context_handle;
   ucc_mem_map_t *map_segments;
   shmem_oob_info_t oob_info;
@@ -49,6 +48,10 @@ ucc_status_t ucc_oob_allgather_free(void *req);
 
 void shmem_ucc_coll_setup ();
 
+void shmem_ucc_team_setup(ucc_team_h * team_handle);
+
 void shmem_ucc_coll_finalize();
+
+void shmem_ucc_team_finalize(ucc_team_h team_handle);
 
 #endif /* ! _UCC_COLL_H */

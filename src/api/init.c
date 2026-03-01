@@ -22,6 +22,7 @@
 #include "collectives/ucc/ucc.h"
 #include "module.h"
 #include "shmem/api.h"
+#include <ucc/api/ucc.h>
 
 #ifdef ENABLE_EXPERIMENTAL
 #include "allocator/xmemalloc.h"
@@ -53,11 +54,8 @@
  * subsystems.
  */
 static void finalize_helper(void) {
-  
-#ifdef HAVE_UCC
-  shmem_ucc_coll_finalize();
-#endif /* HAVE_UCC */
 
+  
   threadwrap_thread_t this;
 
   /* do nothing if multiple finalizes */
@@ -65,6 +63,11 @@ static void finalize_helper(void) {
     return;
   }
 
+//#ifdef HAVE_UCC
+  shmem_ucc_team_finalize(shmemc_team_shared.ucc_team_handle);
+  shmem_ucc_team_finalize(shmemc_team_world.ucc_team_handle);
+  shmem_ucc_coll_finalize();
+//#endif /* HAVE_UCC */
   logger(LOG_FINALIZE, "%s()", __func__);
 
   this = threadwrap_thread_id();
@@ -183,6 +186,12 @@ inline static int init_thread_helper(int requested, int *provided) {
 
   shmem_barrier_all();
 
+//#ifdef HAVE_UCC
+  shmem_ucc_coll_setup();
+  shmem_ucc_team_setup(&shmemc_team_world.ucc_team_handle);
+  shmem_ucc_team_setup(&shmemc_team_shared.ucc_team_handle);
+//#endif /* HAVE_UCC */
+
   /* just declare success */
   return 0;
 }
@@ -219,9 +228,6 @@ int shmem_init_thread(int requested, int *provided) {
  */
 void shmem_init(void) { 
   (void)init_thread_helper(SHMEM_THREAD_SINGLE, NULL); 
-#ifdef HAVE_UCC
-  shmem_ucc_coll_setup();
-#endif /* HAVE_UCC */
 }
 
 #ifdef PR470

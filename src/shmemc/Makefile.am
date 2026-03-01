@@ -5,7 +5,9 @@ OTHER_CPPFLAGS            = -I$(srcdir)/../shmemu \
 				-I$(top_srcdir)/src/klib \
 				-I$(top_srcdir)/src/api \
 				-I../../include \
-				-I$(top_srcdir)/include
+				-I$(top_srcdir)/include \
+				-I$(top_srcdir)/src/api/collectives/ucc
+
 LIBSHMEMC_SOURCES         = \
 				contexts.c \
 				globalexit.c \

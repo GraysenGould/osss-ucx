@@ -29,8 +29,9 @@
 #include "allocator/memalloc.h"
 #include "module.h"
 
+#include "../api/collectives/ucc/ucc.h"
 #include <stdlib.h>
-
+//#include "ucc.h"
 /**
  * @brief Default teams that are always available
  * @{
@@ -82,6 +83,7 @@ static void shmemc_team_contexts_destroy(shmemc_team_h th) {
  * @param th Team handle to dump info for
  */
 static void dump_team(shmemc_team_h th) {
+  
   int key, val;
 
   printf("==========================================\n");
@@ -269,7 +271,7 @@ static void initialize_common_team(shmemc_team_h th, const char *name,
  * Sets up the SHMEM_TEAM_WORLD team that contains all PEs in the job.
  * Initializes the PE mappings based on the launch information.
  */
-static void initialize_team_world(void) {
+static void initialize_team_world(void) { //important
   int i;
   int absent;
 
@@ -288,6 +290,7 @@ static void initialize_team_world(void) {
     k = kh_put(map, world->rev, i, &absent);
     kh_val(world->rev, k) = i;
   }
+
 }
 
 /**
@@ -322,6 +325,7 @@ static void initialize_team_shared(void) {
     k = kh_put(map, shared->rev, proc.li.peers[i], &absent);
     kh_val(shared->rev, k) = i;
   }
+
 }
 
 

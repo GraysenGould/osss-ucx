@@ -15,7 +15,7 @@
 /* ------ UCC Collective Operation ------- */
 inline static void ucc_alltoall_helper(
       void *dest, const void *source, size_t nelems, int PE_start,
-      int logPE_stride, int PE_size, long *pSync) {
+      int logPE_stride, int PE_size, long *pSync, ucc_team_h team_handle) {
   printf("DEBUG: ucc_alltoall helper part 1\n");
   ucc_status_t status;
   ucc_coll_buffer_info_t coll_src_buffer_info =  {
@@ -46,7 +46,7 @@ inline static void ucc_alltoall_helper(
   printf("DEBUG: ucc_alltoall helper part 4\n");
   ucc_coll_req_h coll_handle;
   if (UCC_OK != (status = 
-        ucc_collective_init(&coll_args, &coll_handle, shmem_ucc_coll.team_handle))){
+        ucc_collective_init(&coll_args, &coll_handle, team_handle))){
     printf("Could Not Initalize UCC collective. Status: %d\n", status);
     return;
   }
@@ -99,7 +99,7 @@ inline static void ucc_alltoall_helper(
         dest, source, nelems * sizeof(_type), team_h->start,                   \
         (team_h->stride > 0) ? (int)log2((double)team_h->stride) : 0,          \
         team_h->nranks,                                                        \
-        shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE));               \
+        shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE), team_h->ucc_team_handle);               \
                                                                                \
     shmemc_team_reset_psync(team_h, SHMEMC_PSYNC_COLLECTIVE);                  \
                                                                                \
@@ -135,7 +135,7 @@ SHMEM_STANDARD_RMA_TYPE_TABLE(DEFINE_ALLTOALL_TYPES)
         dest, source, nelems, team_h->start,                                   \
         (team_h->stride > 0) ? (int)log2((double)team_h->stride) : 0,          \
         team_h->nranks,                                                        \
-        shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE));               \
+        shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE), team_h->ucc_team_handle);               \
                                                                                \
     shmemc_team_reset_psync(team_h, SHMEMC_PSYNC_COLLECTIVE);                  \
                                                                                \

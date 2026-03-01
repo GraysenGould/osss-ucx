@@ -69,6 +69,7 @@ void shmemc_init(void) {
 
   /* just sync, no collect */
   shmemc_pmi_barrier_all(false);
+
 }
 
 /**
