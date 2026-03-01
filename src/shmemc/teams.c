@@ -545,7 +545,7 @@ int shmemc_team_split_strided(shmemc_team_h parh, int start, int stride,
   // }
 
   *newh = newt;
-
+  /* TODO: split UCC Team */
   return 0;
 }
 

@@ -42,6 +42,7 @@
  * @param TYPENAME The type name
  * @param ... The arguments to the collective operation
  */
+
 #define TYPED_CALL(CONFIG, TYPENAME, ...)                                      \
   do {                                                                         \
     char opstr[COLL_NAME_MAX * 2];                                             \
@@ -52,6 +53,7 @@
       strncpy(opstr, base, sizeof(opstr) - 1);                                 \
       opstr[sizeof(opstr) - 1] = '\0';                                         \
     }                                                                          \
+    printf("Passing opstr: %s\n", opstr); \
     int _rc = register_##CONFIG(opstr);                                        \
     if (_rc != 0) {                                                            \
       shmemu_fatal("couldn't register typed collective '%s' (s = %d)", opstr,  \
@@ -59,6 +61,12 @@
     }                                                                          \
     return colls.CONFIG.f(__VA_ARGS__);                                        \
   } while (0)
+
+
+#define TYPED_CALL_UCC(CONFIG, COLL_NAME, TYPENAME, ...)                        \
+  do {                                                                         \
+      return ucc_##COLL_NAME##_##TYPENAME(__VA_ARGS__);                      \
+  } while(0) 
 
 /**
  * @brief Macro for to_all typed call operations with void return type
@@ -189,7 +197,7 @@ void collectives_finalize(void) { return; }
                                    const _type *source, size_t nelems) {       \
     logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest,       \
            source, nelems);                                                    \
-    ucc_##_typename##_alltoall(team, dest, source, nelems);                    \
+    TYPED_CALL_UCC(alltoall_type, _typename, alltoall, team, dest, source, nelems);         \
   }
 
 #define DECL_SHIM_ALLTOALL(_type, _typename)                                   \
@@ -218,6 +226,8 @@ int shmem_alltoallmem(shmem_team_t team, void *dest, const void *source,
          nelems);
 #ifdef WITH_UCC
   ucc_alltoallmem(team, dest, source, nelems);
+#else 
+  colls.alltoall_mem.f(team, dest, source, nelems);
 #endif
 }
 
