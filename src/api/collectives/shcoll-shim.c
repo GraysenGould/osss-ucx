@@ -16,6 +16,7 @@
 #include "shmemu.h"
 #include "collectives/table.h"
 #include "collectives/ucc/ucc.h"
+#include "collectives/ucc/collectives/reduce.h"
 #include "shmem/teams.h"
 
 #include "shmem/api_types.h"
@@ -62,9 +63,9 @@
   } while (0)
 
 
-#define TYPED_CALL_UCC(CONFIG, COLL_NAME, TYPENAME, ...)                        \
+#define TYPED_CALL_UCC(CONFIG, TYPENAME, COLL_NAME, ...)                        \
   do {                                                                         \
-      return ucc_##COLL_NAME##_##TYPENAME(__VA_ARGS__);                      \
+      return ucc_##TYPENAME##_##COLL_NAME(__VA_ARGS__);                      \
   } while(0) 
 
 /**
@@ -1040,11 +1041,11 @@ SHMEM_TO_ALL_ARITH_TYPE_TABLE(DECL_SHIM_PROD_TO_ALL)
  * @param _op The operation
  */
 #define SHMEM_TYPENAME_OP_REDUCE(_typename, _type, _op)                        \
-  int shmem_##_typename##_##_op##_reduce(                                      \
+  int shmem_##_typename##_##_op(                                      \
       shmem_team_t team, _type *dest, const _type *source, size_t nreduce) {   \
     logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest,       \
            source, nreduce);                                                   \
-    TYPED_CALL(_op##_reduce, #_typename, team, dest, source, nreduce);         \
+    TYPED_CALL_UCC(_op, _typename, _op, team, dest, source, nreduce);         \
   }
 
 #ifdef ENABLE_PSHMEM
@@ -1138,19 +1139,19 @@ SHMEM_TO_ALL_ARITH_TYPE_TABLE(DECL_SHIM_PROD_TO_ALL)
 
 /* shmem_and_reduce */
 #define DECL_SHIM_AND_REDUCE(_typename, _type)                                 \
-  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, and)
+  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, and_reduce)
 SHMEM_REDUCE_BITWISE_TYPE_TABLE(DECL_SHIM_AND_REDUCE)
 #undef DECL_SHIM_AND_REDUCE
 
 /* shmem_or_reduce */
 #define DECL_SHIM_OR_REDUCE(_typename, _type)                                  \
-  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, or)
+  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, or_reduce)
 SHMEM_REDUCE_BITWISE_TYPE_TABLE(DECL_SHIM_OR_REDUCE)
 #undef DECL_SHIM_OR_REDUCE
 
 /* shmem_xor_reduce */
 #define DECL_SHIM_XOR_REDUCE(_typename, _type)                                 \
-  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, xor)
+  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, xor_reduce)
 SHMEM_REDUCE_BITWISE_TYPE_TABLE(DECL_SHIM_XOR_REDUCE)
 #undef DECL_SHIM_XOR_REDUCE
 
@@ -1257,12 +1258,12 @@ SHMEM_REDUCE_BITWISE_TYPE_TABLE(DECL_SHIM_XOR_REDUCE)
 #endif /* ENABLE_PSHMEM */
 
 #define DECL_SHIM_MAX_REDUCE(_typename, _type)                                 \
-  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, max)
+  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, max_reduce)
 SHMEM_REDUCE_MINMAX_TYPE_TABLE(DECL_SHIM_MAX_REDUCE)
 #undef DECL_SHIM_MAX_REDUCE
 
 #define DECL_SHIM_MIN_REDUCE(_typename, _type)                                 \
-  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, min)
+  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, min_reduce)
 SHMEM_REDUCE_MINMAX_TYPE_TABLE(DECL_SHIM_MIN_REDUCE)
 #undef DECL_SHIM_MIN_REDUCE
 
@@ -1377,12 +1378,12 @@ SHMEM_REDUCE_MINMAX_TYPE_TABLE(DECL_SHIM_MIN_REDUCE)
 #endif /* ENABLE_PSHMEM */
 
 #define DECL_SHIM_SUM_REDUCE(_typename, _type)                                 \
-  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, sum)
+  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, sum_reduce)
 SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_SUM_REDUCE)
 #undef DECL_SHIM_SUM_REDUCE
 
 #define DECL_SHIM_PROD_REDUCE(_typename, _type)                                \
-  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, prod)
+  SHMEM_TYPENAME_OP_REDUCE(_type, _typename, prod_reduce)
 SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_PROD_REDUCE)
 #undef DECL_SHIM_PROD_REDUCE
 

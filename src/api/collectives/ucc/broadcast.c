@@ -17,14 +17,8 @@ inline static void ucc_broadcast_helper(
       void *dest, const void *source, size_t nelems, int PE_start,
       int logPE_stride, int PE_size, long *pSync, ucc_team_h team_handle, 
       int PE_root) {
-  printf("Nelems: %d\n", (int) nelems);
+
   ucc_status_t status;
-  ucc_team_attr_t team_attr;
-  team_attr.mask = UCC_TEAM_ATTR_FIELD_EP;
-  status = ucc_team_get_attr (team_handle, &team_attr);
-  if (status == UCC_OK){
-    printf("PE %d: endpoint: %d\n", (int) shmem_my_pe(), (int)team_attr.ep);
-  }
   if (shmem_my_pe() == PE_root)
     memcpy(dest, source, nelems);
 
@@ -138,36 +132,5 @@ SHMEM_STANDARD_RMA_TYPE_TABLE(DEFINE_BROADCAST_TYPES)
     return 0;                                                                  \
   }
 
-#define SHCOLL_BROADCASTMEM_DEFINITION(_algo)                                  \
-  int shcoll_broadcastmem_##_algo(shmem_team_t team, void *dest,               \
-                                  const void *source, size_t nelems,           \
-                                  int PE_root) {                               \
-    SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_TEAM_VALID(team);                                             \
-    SHMEMU_CHECK_NULL(dest, "dest");                                           \
-    SHMEMU_CHECK_NULL(source, "source");                                       \
-    shmemc_team_h team_h = (shmemc_team_h)team;                                \
-    SHMEMU_CHECK_TEAM_STRIDE(team_h->stride, __func__);                        \
-    SHMEMU_CHECK_SYMMETRIC(dest, nelems * team_h->nranks);                     \
-    SHMEMU_CHECK_SYMMETRIC(source, nelems * team_h->nranks);                   \
-    SHMEMU_CHECK_BUFFER_OVERLAP(dest, source, nelems, nelems);                 \
-    SHMEMU_CHECK_NULL(shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE),  \
-                      "team_h->pSyncs[COLLECTIVE]");                           \
-                                                                               \
-    /* Initialize dest: root PE copies source, others leave dest as-is */      \
-    /* The broadcast operation will overwrite dest on all PEs */               \
-    if (team_h->rank == PE_root)                                               \
-      memcpy(dest, source, nelems);                                            \
-                                                                               \
-    broadcast_helper_##_algo(                                                  \
-        dest, source, nelems, PE_root, team_h->start,                          \
-        (team_h->stride > 0) ? (int)log2((double)team_h->stride) : 0,          \
-        team_h->nranks,                                                        \
-        shmemc_team_get_psync(team_h, SHMEMC_PSYNC_COLLECTIVE));               \
-                                                                               \
-    shmemc_team_reset_psync(team_h, SHMEMC_PSYNC_COLLECTIVE);                  \
-                                                                               \
-    return 0;                                                                  \
-  }
-
 UCC_BROADCASTMEM_DEFINITION()
+
