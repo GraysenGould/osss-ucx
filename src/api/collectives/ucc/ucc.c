@@ -117,7 +117,7 @@ void shmem_ucc_team_setup(ucc_team_h * team_handle){
     .mask = UCC_TEAM_PARAM_FIELD_OOB | UCC_TEAM_PARAM_FIELD_EP | UCC_TEAM_PARAM_FIELD_EP_RANGE | UCC_TEAM_PARAM_FIELD_FLAGS,
     .oob = team_oob_coll, 
     .ep_range = UCC_COLLECTIVE_EP_RANGE_CONTIG, 
-    .ep = (uint64_t) shmem_ucc_coll.oob_info.rank,
+    .ep = (uint64_t) shmem_my_pe(),
     .flags  = UCC_TEAM_FLAG_COLL_WORK_BUFFER,      
   };
 

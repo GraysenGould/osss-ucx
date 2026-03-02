@@ -15,7 +15,6 @@
 #include "thispe.h"
 #include "shmemu.h"
 #include "collectives/table.h"
-//#include "collectives/ucc/collectives/alltoall.h"
 #include "collectives/ucc/ucc.h"
 #include "shmem/teams.h"
 
@@ -784,8 +783,8 @@ void shmem_fcollect64(void *target, const void *source, size_t nelems,
                                     int PE_root) {                             \
     logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu, %d)", __func__, team, dest,   \
            source, nelems, PE_root);                                           \
-    TYPED_CALL(broadcast_type, #_typename, team, dest, source, nelems,         \
-               PE_root);                                                       \
+    TYPED_CALL_UCC(broadcast_type, _typename, broadcast, team, dest, source,   \
+        nelems, PE_root);                                                      \
   }
 
 #define DECL_SHIM_BROADCAST(_type, _typename)                                  \
@@ -813,7 +812,11 @@ int shmem_broadcastmem(shmem_team_t team, void *dest, const void *source,
                        size_t nelems, int PE_root) {
   logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu, %d)", __func__, team, dest,
          source, nelems, PE_root);
+#ifdef WITH_UCC
+  ucc_broadcastmem(team, dest, source, nelems, PE_root);
+#else 
   colls.broadcast_mem.f(team, dest, source, nelems, PE_root);
+#endif
 }
 
 #ifdef ENABLE_PSHMEM
