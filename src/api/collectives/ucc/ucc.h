@@ -2,6 +2,7 @@
 #define _UCC_COLL_H
 #include <ucc/api/ucc.h>
 #include "collectives/alltoall.h"
+#include "collectives/alltoalls.h"
 #include "collectives/broadcast.h"
 #include "collectives/reduce.h"
 #include <stdio.h>

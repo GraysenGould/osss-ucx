@@ -16,7 +16,6 @@
 inline static void ucc_alltoall_helper(
       void *dest, const void *source, size_t nelems, int PE_start,
       int logPE_stride, int PE_size, long *pSync, ucc_team_h team_handle) {
-  printf("DEBUG: ucc_alltoall helper part 1\n");
   ucc_status_t status;
   ucc_coll_buffer_info_t coll_src_buffer_info =  {
     .buffer = source,
@@ -25,7 +24,6 @@ inline static void ucc_alltoall_helper(
     .mem_type = UCC_MEMORY_TYPE_HOST 
   };
 
-  printf("DEBUG: ucc_alltoall helper part 2\n");
   ucc_coll_buffer_info_t coll_dst_buffer_info =  {
     .buffer = dest,
     .count = nelems * PE_size,
@@ -33,7 +31,6 @@ inline static void ucc_alltoall_helper(
     .mem_type = UCC_MEMORY_TYPE_HOST 
   };
 
-  printf("DEBUG: ucc_alltoall helper part 3\n");
   ucc_coll_args_t coll_args = {
     .mask = UCC_COLL_ARGS_FIELD_FLAGS | UCC_COLL_ARGS_FIELD_GLOBAL_WORK_BUFFER,
     .coll_type = UCC_COLL_TYPE_ALLTOALL,
@@ -43,7 +40,6 @@ inline static void ucc_alltoall_helper(
     .flags = UCC_COLL_ARGS_FLAG_MEM_MAPPED_BUFFERS, // delete flag if want to skip memory pre-registration
   };
   
-  printf("DEBUG: ucc_alltoall helper part 4\n");
   ucc_coll_req_h coll_handle;
   if (UCC_OK != (status = 
         ucc_collective_init(&coll_args, &coll_handle, team_handle))){
@@ -51,24 +47,18 @@ inline static void ucc_alltoall_helper(
     return;
   }
   
-  printf("DEBUG: ucc_alltoall helper part 5\n");
   if (UCC_OK != ucc_collective_post(coll_handle)){
     printf("Could No Post UCC collective.\n");
     return;
   }
   
-  printf("DEBUG: ucc_alltoall helper part 6\n");
   /* poll operation until done */
   while(ucc_collective_test(coll_handle) == UCC_INPROGRESS) {
     /* Drive Collective Progress */
     ucc_context_progress(shmem_ucc_coll.context_handle);
   }
   
-  printf("DEBUG: ucc_alltoall helper part 7\n");
-
-  ucc_collective_finalize(coll_handle); 
-  printf("DEBUG: ucc_alltoall helper part 8\n");
-  
+  ucc_collective_finalize(coll_handle);  
 }
 
 /**

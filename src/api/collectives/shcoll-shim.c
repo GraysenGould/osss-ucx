@@ -331,8 +331,8 @@ void shmem_alltoall64(void *target, const void *source, size_t nelems,
                                     ptrdiff_t sst, size_t nelems) {            \
     logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %td, %td, %zu)", __func__, team,   \
            dest, source, dst, sst, nelems);                                    \
-    TYPED_CALL(alltoalls_type, #_typename, team, dest, source, dst, sst,       \
-               nelems);                                                        \
+  TYPED_CALL_UCC(alltoall_type, _typename, alltoalls, team, dest, source,      \
+      dst, sst, nelems);                                                       \
   }
 
 #define DECL_SHIM_ALLTOALLS(_type, _typename)                                  \
@@ -361,7 +361,11 @@ int shmem_alltoallsmem(shmem_team_t team, void *dest, const void *source,
                        ptrdiff_t dst, ptrdiff_t sst, size_t nelems) {
   logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %td, %td, %zu)", __func__, team, dest,
          source, dst, sst, nelems);
+#ifdef WITH_UCC
+  ucc_alltoallmem(team, dest, source, dst, sst, nelems);
+#else 
   colls.alltoalls_mem.f(team, dest, source, dst, sst, nelems);
+#endif
 }
 
 #ifdef ENABLE_PSHMEM
