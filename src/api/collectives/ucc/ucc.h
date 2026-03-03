@@ -5,6 +5,7 @@
 #include "collectives/alltoalls.h"
 #include "collectives/broadcast.h"
 #include "collectives/reduce.h"
+#include "collectives/barrier.h"
 #include <stdio.h>
 #include <shmem.h>
 

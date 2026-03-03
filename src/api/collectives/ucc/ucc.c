@@ -169,6 +169,7 @@ ucc_status_t ucc_oob_allgather(void *sbuf, void *rbuf, size_t msglen,
 
   // 1. Copy UCC's private data to symmetric memory
   memcpy(sym_sbuf, sbuf, msglen);
+
   shmem_barrier_all();  
   // 2. Perform the Put-based Allgather (as written before)
   for (int i = 0; i < info->size; i++) {

@@ -1484,7 +1484,6 @@ void shmem_sync_deprecated(int PE_start, int logPE_stride, int PE_size,
 void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync) {
   logger(LOG_COLLECTIVES, "%s(%d, %d, %zu, %p)", __func__, PE_start,
          logPE_stride, PE_size, pSync);
-
   colls.barrier.f(PE_start, logPE_stride, PE_size, pSync);
 }
 
@@ -1500,7 +1499,6 @@ void shmem_barrier(int PE_start, int logPE_stride, int PE_size, long *pSync) {
  */
 int shmem_team_sync(shmem_team_t team) {
   logger(LOG_COLLECTIVES, "%s(%p)", __func__, team);
-
   colls.team_sync.f(team);
 }
 

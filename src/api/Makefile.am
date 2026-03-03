@@ -89,6 +89,7 @@ MY_SOURCES            +=            \
 				collectives/ucc/alltoalls.c  \
 				collectives/ucc/broadcast.c  \
 				collectives/ucc/reduce.c  \
+				collectives/ucc/barrier.c  \
 				collectives/shcoll-shim.c   \
 				collectives/table.c  
 
