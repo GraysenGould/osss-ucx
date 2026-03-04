@@ -18,6 +18,7 @@ jobs:
       - run: cd hwloc
       - run: mkdir build
       - run: ./autogen.sh
+      - run: ls -la
       - run: cd build
       - run: ../configure
       - run: make
