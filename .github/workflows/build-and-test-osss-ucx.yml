@@ -15,11 +15,21 @@ jobs:
         with:
           repository: open-mpi/hwloc.git
           ref: v2.12 # use version 2.12 of HWLOC
-      - run: cd hwloc
-      - run: mkdir build
-      - run: ./autogen.sh
-      - run: ls -la
-      - run: cd build
-      - run: ../configure
-      - run: make
-      - run: make install
+      - uses: actions/cache@v4
+        id: cache-hwloc
+        with:
+          path: ~/hwloc-install
+          key: hwloc-${{ runner.os }}-v2.12
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y \
+          autoconf \
+          automake \
+          libtool \
+          build-essential
+      - run: |
+          mkdir build 
+          ./autogen.sh
+          cd build
+          ../configure --prefix=$HOME/hwloc-install
+          make -j$(nproc)
+          make install
