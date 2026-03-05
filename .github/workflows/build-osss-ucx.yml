@@ -6,7 +6,8 @@ on:
     branches: [ main ]
 
 jobs:
-  build-hwloc:
+  build-stack:
+    # ----------- hwloc -------------
     name: hwloc build
     runs-on: ubuntu-latest
     steps:
@@ -38,11 +39,8 @@ jobs:
           make install
       - name: Add to PATH
         run: echo "$HOME/hwloc-install/bin" >> $GITHUB_PATH
-  build-libevent:
-    needs: build-hwloc
-    name: libevent build
-    runs-on: ubuntu-latest
-    steps:
+        
+      # ---------- libevent ------------
       - name: Cache libevent
         uses: actions/cache@v4
         id: cache-libevent
@@ -66,11 +64,8 @@ jobs:
           make install -j$(nproc)
       - name: Add to PATH
         run: echo "$HOME/libevent-install/bin" >> $GITHUB_PATH
-  build-pmix:
-    needs: build-libevent
-    name: pmix build
-    runs-on: ubuntu-latest
-    steps:
+
+      # ---------- pmix -------------
       - name: Cache pmix
         uses: actions/cache@v4
         id: cache-pmix
@@ -95,11 +90,8 @@ jobs:
           make install -j$(nproc)
       - name: Add to PATH
         run: echo "$HOME/pmix-install/bin" >> $GITHUB_PATH
-  build-ucx:
-    needs: build-pmix
-    name: ucx build
-    runs-on: ubuntu-latest
-    steps:
+        
+      # ------------  ucx ----------------
       - uses: actions/checkout@v5
         with:
           repository: openucx/ucx.git
@@ -138,11 +130,8 @@ jobs:
           make install -j$(nproc)
       - name: Add to PATH
         run: echo "$HOME/ucx-install/bin" >> $GITHUB_PATH
-  build-ompi:
-    needs: build-ucx
-    name: ompi build
-    runs-on: ubuntu-latest
-    steps:
+        
+      # -------------- ompi ---------------
       - name: Cache ompi
         uses: actions/cache@v4
         id: cache-ompi
@@ -200,11 +189,8 @@ jobs:
           make install -j$(nproc)
       - name: Add to PATH
         run: echo "$HOME/libevent-install/bin" >> $GITHUB_PATH
-  build-osss-ucx:
-    needs: build-ompi
-    name: osss-ucx build
-    runs-on: ubuntu-latest
-    steps:
+        
+      # ------------- osss-ucx  ---------------
       - uses: actions/checkout@v5
         with:
           repository: GraysenGould/osss-ucx.git
