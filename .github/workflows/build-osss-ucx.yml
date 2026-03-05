@@ -150,7 +150,7 @@ jobs:
           automake \
           libtool \
           build-essential
-          mkdir build; cd build
+          mkdir -p build; cd build
           cd openmpi-5.0.4
           ./configure \
            --prefix=$HOME/ompi-install/ \
@@ -187,9 +187,9 @@ jobs:
           --disable-wrapper-runpath \
           CFLAGS=-DYY_BUF_SIZE=1048576 \
           --disable-debug
-          make install -j$(nproc)
+          sudo make install -j$(nproc)
       - name: Add to PATH
-        run: echo "$HOME/libevent-install/bin" >> $GITHUB_PATH
+        run: echo "$HOME/ompi-install/bin" >> $GITHUB_PATH
         
       # ------------- osss-ucx  ---------------
       - uses: actions/checkout@v5
