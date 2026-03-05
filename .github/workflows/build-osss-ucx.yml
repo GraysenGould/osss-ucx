@@ -90,7 +90,7 @@ jobs:
           build-essential
           cd pmix-5.0.2
           mkdir build; cd build
-          ../configure --prefix=$HOME/pmix-install --with-libevent=$HOME/libevent-install --with-hwloc=$HOME/hwloc-install
+          ../configure --prefix=$HOME/pmix-install --with-libevent=$HOME/libevent-install/ --with-hwloc=$HOME/hwloc-install/
           make -j$(nproc)
           make install -j$(nproc)
       - name: Add to PATH
@@ -138,5 +138,105 @@ jobs:
           make install -j$(nproc)
       - name: Add to PATH
         run: echo "$HOME/ucx-install/bin" >> $GITHUB_PATH
-
+  build-ompi:
+    needs: build-ucx
+    name: ompi build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache ompi
+        uses: actions/cache@v4
+        id: cache-ompi
+        with:
+          path: ~/ompi-install
+          key: ompi-${{ runner.os }}-v5.0.4
+      - name: Build ompi
+        if: steps.cache-ompi.outputs.cache-hit != 'true'
+        run: |
+          wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-5.0.4.tar.gz
+          tar -xzf openmpi-5.0.4.tar.gz          
+          sudo apt-get update
+          sudo apt-get install -y \
+          autoconf \
+          automake \
+          libtool \
+          build-essential
+          mkdir build; cd build
+          cd openmpi-5.0.4
+          ./configure \
+           --prefix=$HOME/ompi-install/ \
+           --disable-static \
+           --disable-silent-rules \
+           --enable-shared \
+           --with-ucx=$HOME/ucx-install/ \
+           --without-hcoll \
+           --without-xpmem \
+           --without-ofi \
+           --without-psm \
+           --without-mxm \
+           --without-knem \
+           --without-psm2 \
+          --without-ucc \
+          --without-cma \ 
+          --without-fca \
+          --without-cray-xpmem \
+          --without-alps \
+          --without-lsf \
+          --without-sge \
+          --without-loadleveler \
+          --disable-memchecker \
+          --with-libevent=$HOME/libevent-install/ \
+          --with-pmix=$HOME/pmix-install/ \
+          --with-hwloc=$HOME/hwloc-install \
+          --disable-java \
+          --disable-mpi-java \
+          --disable-io-romio \
+          --with-gpfs=no \
+          --without-cuda \
+          --enable-oshmem \
+          --enable-wrapper-rpath \
+          --disable-wrapper-runpath \
+          CFLAGS=-DYY_BUF_SIZE=1048576 \
+          --disable-debug
+          make install -j$(nproc)
+      - name: Add to PATH
+        run: echo "$HOME/libevent-install/bin" >> $GITHUB_PATH
+  build-osss-ucx:
+    needs: build-ompi
+    name: osss-ucx build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          repository: GraysenGould/osss-ucx.git
+          ref: main # use main branch (version 1.5)
+      - name: Cache osss-ucx
+        uses: actions/cache@v4
+        id: cache-osss-ucx
+        with:
+          path: ~/osss-ucx-install
+          key: osss-ucx-${{ runner.os }}-v1.5
+      - name: Build osss-ucx
+        if: steps.cache-osss-ucx.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+          autoconf \
+          automake \
+          libtool \
+          build-essential
+          cd osss-ucx
+          mkdir build
+          ./autogen.sh
+          cd build
+          export SHMEM_LAUNCHER="$HOME/ompi-install/bin/mpiexec"
+          export CC=`which gcc`
+          ./configure \
+           --prefix=$HOME/osss-ucx-install \
+           --with-ucx=$HOME/ucx-install/ \
+           --with-pmix=$HOME/pmix-install/ \
+           --with-heap-size=128M   \
+           --enable-debug=yes
+          make install -j$(nproc)
+      - name: Add to PATH
+        run: echo "$HOME/osss-ucx-install/bin" >> $GITHUB_PATH
     
