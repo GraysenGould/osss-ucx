@@ -115,10 +115,10 @@ jobs:
           cd ucx
           git submodule update --init --recursive
           mkdir build 
-          ./autogen.sh
+          sudo ./autogen.sh
           export CC=`which gcc`
           export CXX=`which g++`
-          ./contrib/configure-release \
+          sudo ./contrib/configure-release \
             CFLAGS="-Wno-error=unused-but-set-variable" \
             CXXFLAGS="-Wno-error=unused-but-set-variable" \
             --prefix=$UCX_DIR \
@@ -127,8 +127,8 @@ jobs:
             --with-dc \
             --with-mlx5-dv \
             --enable-mt
-          make -j$(nproc)
-          make install -j$(nproc)
+          sudo make -j$(nproc)
+          sudo make install -j$(nproc)
       - name: Add to PATH
         run: echo "$HOME/ucx-install/bin" >> $GITHUB_PATH
         
