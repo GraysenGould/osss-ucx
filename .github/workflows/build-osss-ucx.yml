@@ -96,6 +96,7 @@ jobs:
         with:
           repository: openucx/ucx.git
           ref: v1.19.x # use version `1.19.x of ucx
+          path: ucx
       - name: Cache ucx
         uses: actions/cache@v4
         id: cache-ucx
@@ -195,6 +196,7 @@ jobs:
         with:
           repository: GraysenGould/osss-ucx.git
           ref: main # use main branch (version 1.5)
+          path: osss-ucx
       - name: Cache osss-ucx
         uses: actions/cache@v4
         id: cache-osss-ucx
