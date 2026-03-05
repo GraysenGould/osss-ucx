@@ -20,8 +20,9 @@ jobs:
         with:
           path: ~/hwloc-install
           key: hwloc-${{ runner.os }}-v2.12
-      - run: sudo apt-get update
-      - run: sudo apt-get install -y \
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y \
           autoconf \
           automake \
           libtool \
