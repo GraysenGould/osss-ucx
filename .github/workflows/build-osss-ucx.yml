@@ -150,9 +150,9 @@ jobs:
           automake \
           libtool \
           build-essential
-          mkdir -p build; cd build
           cd openmpi-5.0.4
-          ./configure \
+          mkdir -p build; cd build
+          ../configure \
            --prefix=$HOME/ompi-install/ \
            --disable-static \
            --disable-silent-rules \
@@ -174,9 +174,9 @@ jobs:
           --without-sge \
           --without-loadleveler \
           --disable-memchecker \
-          --with-libevent=$HOME/libevent-install/ \
-          --with-pmix=$HOME/pmix-install/ \
-          --with-hwloc=$HOME/hwloc-install \
+          --with-libevent=$HOME/libevent-install/  \
+          --with-pmix=$HOME/pmix-install/  \
+          --with-hwloc=$HOME/hwloc-install/  \
           --disable-java \
           --disable-mpi-java \
           --disable-io-romio \
