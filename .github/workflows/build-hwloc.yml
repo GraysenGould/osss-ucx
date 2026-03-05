@@ -5,7 +5,6 @@ on:
   pull_request:
     branches: [ main ]
 
-    
 jobs:
   build:
     name: hwloc build
@@ -15,22 +14,27 @@ jobs:
         with:
           repository: open-mpi/hwloc.git
           ref: v2.12 # use version 2.12 of HWLOC
-      - uses: actions/cache@v4
+      - name: Cache hwloc
+        uses: actions/cache@v4
         id: cache-hwloc
         with:
           path: ~/hwloc-install
           key: hwloc-${{ runner.os }}-v2.12
-      - run: |
+          
+      - name: Build hwloc
+        if: steps.cache-hwloc.outputs.cache-hit != 'true'
+        run: |
           sudo apt-get update
           sudo apt-get install -y \
           autoconf \
           automake \
           libtool \
           build-essential
-      - run: |
           mkdir build 
           ./autogen.sh
           cd build
           ../configure --prefix=$HOME/hwloc-install
           make -j$(nproc)
           make install
+      - name: Add to PATH
+        run: echo "$HOME/hwloc-install/bin" >> $GITHUB_PATH
