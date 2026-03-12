@@ -491,7 +491,8 @@ void shmem_alltoalls64(void *target, const void *source, ptrdiff_t dst,
                                   const _type *source, size_t nelems) {        \
     logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest,       \
            source, nelems);                                                    \
-    TYPED_CALL(collect_type, #_typename, team, dest, source, nelems);          \
+    TYPED_CALL_UCC(collect_type, _typename, collect, team, dest, source,     \
+      nelems);                                                                 \
   }
 
 #define DECL_SHIM_COLLECT(_type, _typename)                                    \
@@ -518,7 +519,11 @@ int shmem_collectmem(shmem_team_t team, void *dest, const void *source,
                      size_t nelems) {
   logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest, source,
          nelems);
+#ifdef WITH_UCC
+  ucc_collectmem(team, dest, source, nelems);
+#else 
   colls.collect_mem.f(team, dest, source, nelems);
+#endif
 }
 
 #ifdef ENABLE_PSHMEM

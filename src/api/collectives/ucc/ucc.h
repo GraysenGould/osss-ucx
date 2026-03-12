@@ -6,6 +6,7 @@
 #include "collectives/broadcast.h"
 #include "collectives/reduce.h"
 #include "collectives/fcollect.h"
+#include "collectives/collect.h"
 #include "collectives/barrier.h"
 #include <stdio.h>
 #include <shmem.h>

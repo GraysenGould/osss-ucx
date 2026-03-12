@@ -90,6 +90,7 @@ MY_SOURCES            +=            \
 				collectives/ucc/broadcast.c  \
 				collectives/ucc/reduce.c  \
 				collectives/ucc/fcollect.c  \
+				collectives/ucc/collect.c  \
 				collectives/ucc/barrier.c  \
 				collectives/shcoll-shim.c   \
 				collectives/table.c  
