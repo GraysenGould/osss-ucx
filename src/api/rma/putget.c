@@ -842,6 +842,83 @@ SHMEM_CTX_SIZED_IGET(64)
 SHMEM_CTX_SIZED_IGET(128)
 
 #ifdef ENABLE_PSHMEM
+#pragma weak shmem_ctx_float_ibget = pshmem_ctx_float_ibget
+#define shmem_ctx_float_ibget pshmem_ctx_float_ibget
+#pragma weak shmem_ctx_double_ibget = pshmem_ctx_double_ibget
+#define shmem_ctx_double_ibget pshmem_ctx_double_ibget
+#pragma weak shmem_ctx_longdouble_ibget = pshmem_ctx_longdouble_ibget
+#define shmem_ctx_longdouble_ibget pshmem_ctx_longdouble_ibget
+#pragma weak shmem_ctx_char_ibget = pshmem_ctx_char_ibget
+#define shmem_ctx_char_ibget pshmem_ctx_char_ibget
+#pragma weak shmem_ctx_schar_ibget = pshmem_ctx_schar_ibget
+#define shmem_ctx_schar_ibget pshmem_ctx_schar_ibget
+#pragma weak shmem_ctx_short_ibget = pshmem_ctx_short_ibget
+#define shmem_ctx_short_ibget pshmem_ctx_short_ibget
+#pragma weak shmem_ctx_int_ibget = pshmem_ctx_int_ibget
+#define shmem_ctx_int_ibget pshmem_ctx_int_ibget
+#pragma weak shmem_ctx_long_ibget = pshmem_ctx_long_ibget
+#define shmem_ctx_long_ibget pshmem_ctx_long_ibget
+#pragma weak shmem_ctx_longlong_ibget = pshmem_ctx_longlong_ibget
+#define shmem_ctx_longlong_ibget pshmem_ctx_longlong_ibget
+#pragma weak shmem_ctx_uchar_ibget = pshmem_ctx_uchar_ibget
+#define shmem_ctx_uchar_ibget pshmem_ctx_uchar_ibget
+#pragma weak shmem_ctx_ushort_ibget = pshmem_ctx_ushort_ibget
+#define shmem_ctx_ushort_ibget pshmem_ctx_ushort_ibget
+#pragma weak shmem_ctx_uint_ibget = pshmem_ctx_uint_ibget
+#define shmem_ctx_uint_ibget pshmem_ctx_uint_ibget
+#pragma weak shmem_ctx_ulong_ibget = pshmem_ctx_ulong_ibget
+#define shmem_ctx_ulong_ibget pshmem_ctx_ulong_ibget
+#pragma weak shmem_ctx_ulonglong_ibget = pshmem_ctx_ulonglong_ibget
+#define shmem_ctx_ulonglong_ibget pshmem_ctx_ulonglong_ibget
+#pragma weak shmem_ctx_int8_ibget = pshmem_ctx_int8_ibget
+#define shmem_ctx_int8_ibget pshmem_ctx_int8_ibget
+#pragma weak shmem_ctx_int16_ibget = pshmem_ctx_int16_ibget
+#define shmem_ctx_int16_ibget pshmem_ctx_int16_ibget
+#pragma weak shmem_ctx_int32_ibget = pshmem_ctx_int32_ibget
+#define shmem_ctx_int32_ibget pshmem_ctx_int32_ibget
+#pragma weak shmem_ctx_int64_ibget = pshmem_ctx_int64_ibget
+#define shmem_ctx_int64_ibget pshmem_ctx_int64_ibget
+#pragma weak shmem_ctx_uint8_ibget = pshmem_ctx_uint8_ibget
+#define shmem_ctx_uint8_ibget pshmem_ctx_uint8_ibget
+#pragma weak shmem_ctx_uint16_ibget = pshmem_ctx_uint16_ibget
+#define shmem_ctx_uint16_ibget pshmem_ctx_uint16_ibget
+#pragma weak shmem_ctx_uint32_ibget = pshmem_ctx_uint32_ibget
+#define shmem_ctx_uint32_ibget pshmem_ctx_uint32_ibget
+#pragma weak shmem_ctx_uint64_ibget = pshmem_ctx_uint64_ibget
+#define shmem_ctx_uint64_ibget pshmem_ctx_uint64_ibget
+#pragma weak shmem_ctx_size_ibget = pshmem_ctx_size_ibget
+#define shmem_ctx_size_ibget pshmem_ctx_size_ibget
+#pragma weak shmem_ctx_ptrdiff_ibget = pshmem_ctx_ptrdiff_ibget
+#define shmem_ctx_ptrdiff_ibget pshmem_ctx_ptrdiff_ibget
+#endif /* ENABLE_PSHMEM */
+
+#define IBGET_TYPE_HELPER(_type, _typename)                                     \
+  SHMEM_CTX_TYPED_IBGET(_typename, _type)
+
+SHMEM_STANDARD_RMA_TYPE_TABLE(IBGET_TYPE_HELPER)
+#undef IBGET_TYPE_HELPER
+
+#ifdef ENABLE_PSHMEM
+#pragma weak shmem_ctx_ibget8 = pshmem_ctx_ibget8
+#define shmem_ctx_ibget8 pshmem_ctx_ibget8
+#pragma weak shmem_ctx_ibget16 = pshmem_ctx_ibget16
+#define shmem_ctx_ibget16 pshmem_ctx_ibget16
+#pragma weak shmem_ctx_ibget32 = pshmem_ctx_ibget32
+#define shmem_ctx_ibget32 pshmem_ctx_ibget32
+#pragma weak shmem_ctx_ibget64 = pshmem_ctx_ibget64
+#define shmem_ctx_ibget64 pshmem_ctx_ibget64
+#pragma weak shmem_ctx_ibget128 = pshmem_ctx_ibget128
+#define shmem_ctx_ibget128 pshmem_ctx_ibget128
+#endif /* ENABLE_PSHMEM */
+
+SHMEM_CTX_SIZED_IBGET(8)
+SHMEM_CTX_SIZED_IBGET(16)
+SHMEM_CTX_SIZED_IBGET(32)
+SHMEM_CTX_SIZED_IBGET(64)
+SHMEM_CTX_SIZED_IBGET(128)
+
+
+#ifdef ENABLE_PSHMEM
 #pragma weak shmem_ctx_float_get_nbi = pshmem_ctx_float_get_nbi
 #define shmem_ctx_float_get_nbi pshmem_ctx_float_get_nbi
 #pragma weak shmem_ctx_double_get_nbi = pshmem_ctx_double_get_nbi

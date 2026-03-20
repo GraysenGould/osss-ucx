@@ -50,7 +50,11 @@ DECL_TYPED_CTX_PUT_PROTO(complexd, COMPLEXIFY(double))
                                    const _type *src, size_t nelems, int pe);   \
   void shmem_ctx_##_name##_iget(shmem_ctx_t ctx, _type *dest,                  \
                                 const _type *src, ptrdiff_t tst,               \
-                                ptrdiff_t sst, size_t nelems, int pe);
+                                ptrdiff_t sst, size_t nelems, int pe);         \
+  void shmem_ctx_##_name##_ibget(shmem_ctx_t ctx, _type *dest,                 \
+                                const _type *src, ptrdiff_t tst,               \
+                                ptrdiff_t sst, size_t bsize, size_t nblocks,   \
+                                int pe);
 
 DECL_TYPED_CTX_GET_PROTO(complexf, COMPLEXIFY(float))
 DECL_TYPED_CTX_GET_PROTO(complexd, COMPLEXIFY(double))

@@ -23,6 +23,7 @@
  * - shmem_get()
  * - shmem_g()
  * - shmem_iget()
+ * - shmem_ibget()
  * - shmem_put_nbi()
  * - shmem_get_nbi()
  * - shmem_put_signal()

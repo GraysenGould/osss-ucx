@@ -426,6 +426,9 @@ SHMEM_STANDARD_RMA_TYPE_TABLE(DECL_CTX_GET)
   void shmem_##_typename##_i##_opname(_type *dest, const _type *src,           \
                                       ptrdiff_t tst, ptrdiff_t sst,            \
                                       size_t nelems, int pe);                  \
+  void shmem_##_typename##_ib##_opname(_type *dest, const _type *src,          \
+                                      ptrdiff_t tst, ptrdiff_t sst,            \
+                                      size_t bsize, size_t nblocks, int pe);   \
   void shmem_##_typename##_##_opname##_nbi(_type *dest, const _type *src,      \
                                            size_t nelems, int pe);
 
