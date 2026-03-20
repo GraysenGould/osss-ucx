@@ -253,6 +253,95 @@ SHMEM_CTX_SIZED_IPUT(32)
 SHMEM_CTX_SIZED_IPUT(64)
 SHMEM_CTX_SIZED_IPUT(128)
 
+/**
+ * @brief Implementation of strided block put operations
+ *
+ * TODO: this is just layered over shmem_put/get linearly for now.
+ * Looking for better iov method in UCX
+ */
+
+#ifdef ENABLE_PSHMEM
+#pragma weak shmem_ctx_float_ibput = pshmem_ctx_float_ibput
+#define shmem_ctx_float_ibput pshmem_ctx_float_ibput
+#pragma weak shmem_ctx_double_ibput = pshmem_ctx_double_ibput
+#define shmem_ctx_double_ibput pshmem_ctx_double_ibput
+#pragma weak shmem_ctx_longdouble_ibput = pshmem_ctx_longdouble_ibput
+#define shmem_ctx_longdouble_ibput pshmem_ctx_longdouble_ibput
+#pragma weak shmem_ctx_char_ibput = pshmem_ctx_char_ibput
+#define shmem_ctx_char_ibput pshmem_ctx_char_ibput
+#pragma weak shmem_ctx_schar_ibput = pshmem_ctx_schar_ibput
+#define shmem_ctx_schar_ibput pshmem_ctx_schar_ibput
+#pragma weak shmem_ctx_short_ibput = pshmem_ctx_short_ibput
+#define shmem_ctx_short_ibput pshmem_ctx_short_ibput
+#pragma weak shmem_ctx_int_ibput = pshmem_ctx_int_ibput
+#define shmem_ctx_int_ibput pshmem_ctx_int_ibput
+#pragma weak shmem_ctx_long_ibput = pshmem_ctx_long_ibput
+#define shmem_ctx_long_ibput pshmem_ctx_long_ibput
+#pragma weak shmem_ctx_longlong_ibput = pshmem_ctx_longlong_ibput
+#define shmem_ctx_longlong_ibput pshmem_ctx_longlong_ibput
+#pragma weak shmem_ctx_uchar_ibput = pshmem_ctx_uchar_ibput
+#define shmem_ctx_uchar_ibput pshmem_ctx_uchar_ibput
+#pragma weak shmem_ctx_ushort_ibput = pshmem_ctx_ushort_ibput
+#define shmem_ctx_ushort_ibput pshmem_ctx_ushort_ibput
+#pragma weak shmem_ctx_uint_ibput = pshmem_ctx_uint_ibput
+#define shmem_ctx_uint_ibput pshmem_ctx_uint_ibput
+#pragma weak shmem_ctx_ulong_ibput = pshmem_ctx_ulong_ibput
+#define shmem_ctx_ulong_ibput pshmem_ctx_ulong_ibput
+#pragma weak shmem_ctx_ulonglong_ibput = pshmem_ctx_ulonglong_ibput
+#define shmem_ctx_ulonglong_ibput pshmem_ctx_ulonglong_ibput
+#pragma weak shmem_ctx_int8_ibput = pshmem_ctx_int8_ibput
+#define shmem_ctx_int8_ibput pshmem_ctx_int8_ibput
+#pragma weak shmem_ctx_int16_ibput = pshmem_ctx_int16_ibput
+#define shmem_ctx_int16_ibput pshmem_ctx_int16_ibput
+#pragma weak shmem_ctx_int32_ibput = pshmem_ctx_int32_ibput
+#define shmem_ctx_int32_ibput pshmem_ctx_int32_ibput
+#pragma weak shmem_ctx_int64_ibput = pshmem_ctx_int64_ibput
+#define shmem_ctx_int64_ibput pshmem_ctx_int64_ibput
+#pragma weak shmem_ctx_uint8_ibput = pshmem_ctx_uint8_ibput
+#define shmem_ctx_uint8_ibput pshmem_ctx_uint8_ibput
+#pragma weak shmem_ctx_uint16_ibput = pshmem_ctx_uint16_ibput
+#define shmem_ctx_uint16_ibput pshmem_ctx_uint16_ibput
+#pragma weak shmem_ctx_uint32_ibput = pshmem_ctx_uint32_ibput
+#define shmem_ctx_uint32_ibput pshmem_ctx_uint32_ibput
+#pragma weak shmem_ctx_uint64_ibput = pshmem_ctx_uint64_ibput
+#define shmem_ctx_uint64_ibput pshmem_ctx_uint64_ibput
+#pragma weak shmem_ctx_size_ibput = pshmem_ctx_size_ibput
+#define shmem_ctx_size_ibput pshmem_ctx_size_ibput
+#pragma weak shmem_ctx_ptrdiff_ibput = pshmem_ctx_ptrdiff_ibput
+#define shmem_ctx_ptrdiff_ibput pshmem_ctx_ptrdiff_ibput
+#endif /* ENABLE_PSHMEM */
+
+/**
+ * @brief Typed strided put operations
+ */
+#define IBPUT_TYPE_HELPER(_type, _typename)                                     \
+  SHMEM_CTX_TYPED_IBPUT(_typename, _type)
+
+SHMEM_STANDARD_RMA_TYPE_TABLE(IBPUT_TYPE_HELPER)
+#undef IBPUT_TYPE_HELPER
+
+#ifdef ENABLE_PSHMEM
+#pragma weak shmem_ctx_ibput8 = pshmem_ctx_ibput8
+#define shmem_ctx_ibput8 pshmem_ctx_ibput8
+#pragma weak shmem_ctx_ibput16 = pshmem_ctx_ibput16
+#define shmem_ctx_ibput16 pshmem_ctx_ibput16
+#pragma weak shmem_ctx_ibput32 = pshmem_ctx_ibput32
+#define shmem_ctx_ibput32 pshmem_ctx_ibput32
+#pragma weak shmem_ctx_ibput64 = pshmem_ctx_ibput64
+#define shmem_ctx_ibput64 pshmem_ctx_ibput64
+#pragma weak shmem_ctx_ibput128 = pshmem_ctx_ibput128
+#define shmem_ctx_ibput128 pshmem_ctx_ibput128
+#endif /* ENABLE_PSHMEM */
+
+/**
+ * @brief Size-specific strided put operations
+ */
+SHMEM_CTX_SIZED_IBPUT(8)
+SHMEM_CTX_SIZED_IBPUT(16)
+SHMEM_CTX_SIZED_IBPUT(32)
+SHMEM_CTX_SIZED_IBPUT(64)
+SHMEM_CTX_SIZED_IBPUT(128)
+
 #ifdef ENABLE_PSHMEM
 #pragma weak shmem_ctx_float_put_nbi = pshmem_ctx_float_put_nbi
 #define shmem_ctx_float_put_nbi pshmem_ctx_float_put_nbi
@@ -840,6 +929,13 @@ SHMEM_CTX_SIZED_IGET(16)
 SHMEM_CTX_SIZED_IGET(32)
 SHMEM_CTX_SIZED_IGET(64)
 SHMEM_CTX_SIZED_IGET(128)
+
+/**
+ * @brief Implementation of strided block get operations
+ *
+ * TODO: this is just layered over shmem_put/get linearly for now.
+ * Looking for better iov method in UCX
+ */
 
 #ifdef ENABLE_PSHMEM
 #pragma weak shmem_ctx_float_ibget = pshmem_ctx_float_ibget

@@ -152,6 +152,38 @@
   }
 
 /**
+ * @brief Macro to define a typed strided block put operation with a context
+ * @param _name Type name
+ * @param _type C type
+ */
+#define SHMEM_CTX_TYPED_IBPUT(_name, _type)                                    \
+  void shmem_ctx_##_name##_ibput(shmem_ctx_t ctx, _type *target,               \
+                                const _type *source, ptrdiff_t tst,            \
+                                ptrdiff_t sst, size_t bsize, size_t nblocks,   \
+                                int pe) {                                      \
+    size_t ti = 0, si = 0;                                                     \
+    size_t i;                                                                  \
+                                                                               \
+    SHMEMU_CHECK_INIT();                                                       \
+    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
+    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
+    SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
+    SHMEMU_CHECK_SYMMETRIC(target, 2);                                         \
+                                                                               \
+    logger(LOG_RMA,                                                            \
+           "%s(ctx=%lu, dest=%p, src=%p, "                                     \
+           "tst=%lu, sst=%lu, bsize=%lu, nblocks=%ld, pe=%d)",                 \
+           __func__, shmemc_context_id(ctx), target, source, tst, sst, bsize,  \
+           nblocks, pe);                                                       \
+                                                                               \
+    for (i = 0; i < nblocks; ++i) {                                             \
+      shmem_ctx_##_name##_put(ctx, &(target[ti]), &(source[si]), bsize, pe);   \
+      ti += tst;                                                               \
+      si += sst;                                                               \
+    }                                                                          \
+  }
+
+/**
  * @brief Macro to define a typed strided get operation with a context
  * @param _name Type name
  * @param _type C type
@@ -238,6 +270,41 @@
     for (i = 0; i < nelems; ++i) {                                             \
       shmem_ctx_put##_size(ctx, (void *)&((char *)target)[ti],                 \
                            (void *)&((char *)source)[si], 1, pe);              \
+      ti += tst_nb;                                                            \
+      si += sst_nb;                                                            \
+    }                                                                          \
+  }
+
+/**
+ * @brief Macro to define a sized strided block put operation with a context
+ * @param _name Type name
+ * @param _type C type
+ */
+#define SHMEM_CTX_SIZED_IBPUT(_size)                                           \
+  void shmem_ctx_ibput##_size(shmem_ctx_t ctx, void *target,                   \
+                                const void *source, ptrdiff_t tst,             \
+                                ptrdiff_t sst, size_t bsize, size_t nblocks,   \
+                                int pe) {                                      \
+    const size_t tst_nb = BITS2BYTES(_size) * tst;                             \
+    const size_t sst_nb = BITS2BYTES(_size) * sst;                             \
+    size_t ti = 0, si = 0;                                                     \
+    size_t i;                                                                  \
+                                                                               \
+    SHMEMU_CHECK_INIT();                                                       \
+    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
+    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
+    SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
+    SHMEMU_CHECK_SYMMETRIC(source, 3);                                         \
+                                                                               \
+    logger(LOG_RMA,                                                            \
+           "%s(ctx=%lu, dest=%p, src=%p, "                                     \
+           "tst=%lu, sst=%lu, bsize=%lu, nblocks=%ld, pe=%d)",                 \
+           __func__, shmemc_context_id(ctx), target, source, tst, sst, bsize,  \
+           nblocks, pe);                                                       \
+                                                                               \
+    for (i = 0; i < nblocks; ++i) {                                            \
+      shmem_ctx_put##_size(ctx, (void *)&((char *)target)[ti],                 \
+                           (void *)&((char *)source)[si], bsize, pe);          \
       ti += tst_nb;                                                            \
       si += sst_nb;                                                            \
     }                                                                          \
@@ -492,6 +559,18 @@
                                                                                \
     shmem_ctx_##_name##_iput(SHMEM_CTX_DEFAULT, dest, src, tst, sst, nelems,   \
                              pe);                                              \
+  }                                                                            \
+  void shmem_##_name##_ibput(_type *dest, const _type *src, ptrdiff_t tst,     \
+                            ptrdiff_t sst, size_t bsize, size_t nblocks,       \
+                            int pe) {                                          \
+    SHMEMU_CHECK_INIT();                                                       \
+    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
+    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
+    SHMEMU_CHECK_PE_ARG_RANGE(pe, 6);                                          \
+    SHMEMU_CHECK_SYMMETRIC(src, 1);                                            \
+                                                                               \
+    shmem_ctx_##_name##_ibput(SHMEM_CTX_DEFAULT, dest, src, tst, sst, bsize,   \
+                             nblocks, pe);                                     \
   }
 
 /**
@@ -565,6 +644,17 @@
     SHMEMU_CHECK_SYMMETRIC(dest, 1);                                           \
                                                                                \
     shmem_ctx_iput##_size(SHMEM_CTX_DEFAULT, dest, src, tst, sst, nelems, pe); \
+  }                                                                            \
+  void shmem_ibput##_size(void *dest, const void *src, ptrdiff_t tst,          \
+                         ptrdiff_t sst, size_t bsize, size_t nblocks, int pe) {\
+    SHMEMU_CHECK_INIT();                                                       \
+    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
+    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
+    SHMEMU_CHECK_PE_ARG_RANGE(pe, 6);                                          \
+    SHMEMU_CHECK_SYMMETRIC(dest, 1);                                           \
+                                                                               \
+    shmem_ctx_ibput##_size(SHMEM_CTX_DEFAULT, dest, src, tst, sst, bsize,       \
+        nblocks, pe);                                                          \
   }
 
 /**

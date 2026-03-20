@@ -20,6 +20,7 @@
  * - shmem_put()
  * - shmem_p()
  * - shmem_iput()
+ * - shmem_ibput()
  * - shmem_get()
  * - shmem_g()
  * - shmem_iget()

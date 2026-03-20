@@ -382,6 +382,9 @@ void shmem_pcontrol(const int level, ...);
   void shmem_ctx_##_typename##_i##_opname(                                     \
       shmem_ctx_t ctx, _type *dest, const _type *src, ptrdiff_t tst,           \
       ptrdiff_t sst, size_t nelems, int pe);                                   \
+  void shmem_ctx_##_typename##_ib##_opname(                                    \
+      shmem_ctx_t ctx, _type *dest, const _type *src, ptrdiff_t tst,           \
+      ptrdiff_t sst, size_t bsize, size_t nblocks, int pe);                    \
   void shmem_ctx_##_typename##_##_opname##_nbi(                                \
       shmem_ctx_t ctx, _type *dest, const _type *src, size_t nelems, int pe);
 
@@ -474,6 +477,10 @@ SHMEM_STANDARD_RMA_TYPE_TABLE(DECL_GET)
   void shmem_ctx_i##_opname##_size(shmem_ctx_t ctx, void *dest,                \
                                    const void *src, ptrdiff_t tst,             \
                                    ptrdiff_t sst, size_t nelems, int pe);      \
+  void shmem_ctx_ib##_opname##_size(shmem_ctx_t ctx, void *dest,               \
+                                   const void *src, ptrdiff_t tst,             \
+                                   ptrdiff_t sst, size_t bsize, size_t nblocks,\
+                                   int pe);                                    \
   void shmem_ctx_##_opname##_size##_nbi(                                       \
       shmem_ctx_t ctx, void *dest, const void *src, size_t nelems, int pe);
 
@@ -520,6 +527,9 @@ API_DECL_CTX_PUTGET_SIZE(get, 128)
                               int pe);                                         \
   void shmem_i##_opname##_size(void *dest, const void *src, ptrdiff_t tst,     \
                                ptrdiff_t sst, size_t nelems, int pe);          \
+  void shmem_ib##_opname##_size(void *dest, const void *src, ptrdiff_t tst,    \
+                               ptrdiff_t sst, size_t bsize,                    \
+                               size_t nblocks, int pe);                        \
   void shmem_##_opname##_size##_nbi(void *dest, const void *src,               \
                                     size_t nelems, int pe);
 
