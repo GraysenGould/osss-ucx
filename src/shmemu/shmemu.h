@@ -342,13 +342,13 @@ int shmemu_thread_level(const char *tn);
     }                                                                          \
   } while (0)
 
-/* check that _a is a counting number multiple of _b */
-#define SHMEMU_CHECK_COUNTING_MUTIPLE(_a, _b)                                  \
+/* check that _a is greater than or equal to _b */
+#define SHMEMU_CHECK_GREATER_EQUAL(_a, _b)                                     \
   do {                                                                         \
-    if ( _a == 0 || _b == 0 || _a % _b != 0){                                  \
+    if (_a < _b){                                                              \
       shmemu_fatal(                                                            \
-          "In %s(), arguments with values %d and %d are not counting number "  \
-          "mulitples",                                                         \
+          "In %s(), argument %d is less than %d, but is requred to be greater "\
+          "or equal.",                                                         \
           __func__, (_a), (_b));                                               \
     }                                                                          \
   } while (0)
@@ -424,7 +424,7 @@ int shmemu_thread_level(const char *tn);
 /* Empty versions of additional checks */
 #define SHMEMU_CHECK_TEAM_VALID(_team)
 #define SHMEMU_CHECK_BUFFER_OVERLAP(_dest, _source, _dest_size, _source_size)
-#define SHMEMU_CHECK_COUNTING_MUTIPLE(_a, _b)
+#define SHMEMU_CHECK_GREATER_EQUAL(_a, _b)
 #define SHMEMU_CHECK_NULL(_ptr, _name)
 #define SHMEMU_CHECK_POSITIVE(_val, _name)
 #define SHMEMU_CHECK_NON_NEGATIVE(_val, _name)

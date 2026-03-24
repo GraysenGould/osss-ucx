@@ -133,6 +133,7 @@
                                 ptrdiff_t sst, size_t nelems, int pe) {        \
     size_t ti = 0, si = 0;                                                     \
     size_t i;                                                                  \
+    int nb = sizeof(_type);                                                    \
                                                                                \
     SHMEMU_CHECK_INIT();                                                       \
     SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
@@ -145,10 +146,12 @@
            pe);                                                                \
                                                                                \
     for (i = 0; i < nelems; ++i) {                                             \
-      shmem_ctx_##_name##_put(ctx, &(target[ti]), &(source[si]), 1, pe);       \
+      SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_put_nbi(ctx, &(target[ti]),            \
+            &(source[si]), nb, pe));                                           \
       ti += tst;                                                               \
       si += sst;                                                               \
     }                                                                          \
+    SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_quiet(ctx));                             \
   }
 
 /**
@@ -163,11 +166,12 @@
                                 int pe) {                                      \
     size_t ti = 0, si = 0;                                                     \
     size_t i;                                                                  \
+    int nb = sizeof(_type) * bsize;                                            \
                                                                                \
     SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
-    SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
+    SHMEMU_CHECK_GREATER_EQUAL(tst, bsize);                                    \
+    SHMEMU_CHECK_GREATER_EQUAL(sst, bsize);                                    \
+    SHMEMU_CHECK_PE_ARG_RANGE(pe, 8);                                          \
     SHMEMU_CHECK_SYMMETRIC(target, 2);                                         \
                                                                                \
     logger(LOG_RMA,                                                            \
@@ -176,11 +180,13 @@
            __func__, shmemc_context_id(ctx), target, source, tst, sst, bsize,  \
            nblocks, pe);                                                       \
                                                                                \
-    for (i = 0; i < nblocks; ++i) {                                             \
-      shmem_ctx_##_name##_put(ctx, &(target[ti]), &(source[si]), bsize, pe);   \
+    for (i = 0; i < nblocks; ++i) {                                            \
+      SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_put_nbi(ctx, &(target[ti]),            \
+            &(source[si]), nb, pe));                                           \
       ti += tst;                                                               \
       si += sst;                                                               \
     }                                                                          \
+    SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_quiet(ctx));                             \
   }
 
 /**
@@ -194,6 +200,7 @@
                                 ptrdiff_t sst, size_t nelems, int pe) {        \
     size_t ti = 0, si = 0;                                                     \
     size_t i;                                                                  \
+    int nb = sizeof(_type);                                                    \
                                                                                \
     SHMEMU_CHECK_INIT();                                                       \
     SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
@@ -206,10 +213,12 @@
            pe);                                                                \
                                                                                \
     for (i = 0; i < nelems; ++i) {                                             \
-      shmem_ctx_##_name##_get(ctx, &(target[ti]), &(source[si]), 1, pe);       \
+      SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_get_nbi(ctx, &(target[ti]),            \
+            &(source[si]), nb, pe));                                           \
       ti += tst;                                                               \
       si += sst;                                                               \
     }                                                                          \
+    SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_quiet(ctx));                             \
   }
 
 /**
@@ -218,17 +227,18 @@
  * @param _type C type
  */
 #define SHMEM_CTX_TYPED_IBGET(_name, _type)                                    \
-  void shmem_ctx_##_name##_ibget(shmem_ctx_t ctx, _type *target,                \
+  void shmem_ctx_##_name##_ibget(shmem_ctx_t ctx, _type *target,               \
                                 const _type *source, ptrdiff_t tst,            \
                                 ptrdiff_t sst, size_t bsize, size_t nblocks,   \
                                 int pe) {                                      \
     size_t ti = 0, si = 0;                                                     \
     size_t i;                                                                  \
+    int nb = sizeof(_type) * bsize;                                            \
                                                                                \
     SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
-    SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
+    SHMEMU_CHECK_GREATER_EQUAL(tst, bsize);                                    \
+    SHMEMU_CHECK_GREATER_EQUAL(sst, bsize);                                    \
+    SHMEMU_CHECK_PE_ARG_RANGE(pe, 8);                                          \
     SHMEMU_CHECK_SYMMETRIC(source, 3);                                         \
                                                                                \
     logger(LOG_RMA,                                                            \
@@ -238,10 +248,12 @@
            nblocks, pe);                                                       \
                                                                                \
     for (i = 0; i < nblocks; ++i) {                                            \
-      shmem_ctx_##_name##_get(ctx, &(target[ti]), &(source[si]), bsize, pe);   \
+      SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_get_nbi(ctx, &(target[ti]),            \
+            &(source[si]), nb, pe));                                           \
       ti += tst;                                                               \
       si += sst;                                                               \
     }                                                                          \
+    SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_quiet(ctx));                             \
   }
 
 /**
@@ -256,6 +268,7 @@
     const size_t sst_nb = BITS2BYTES(_size) * sst;                             \
     size_t ti = 0, si = 0;                                                     \
     size_t i;                                                                  \
+    int nb = BITS2BYTES(_size);                                                \
                                                                                \
     SHMEMU_CHECK_INIT();                                                       \
     SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
@@ -268,11 +281,13 @@
            pe);                                                                \
                                                                                \
     for (i = 0; i < nelems; ++i) {                                             \
-      shmem_ctx_put##_size(ctx, (void *)&((char *)target)[ti],                 \
-                           (void *)&((char *)source)[si], 1, pe);              \
+      SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_put_nbi(ctx,                           \
+            (void *)&((char *)target)[ti], (void *)&((char *)source)[si],      \
+            nb, pe));                                                          \
       ti += tst_nb;                                                            \
       si += sst_nb;                                                            \
     }                                                                          \
+    SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_quiet(ctx));                             \
   }
 
 /**
@@ -289,11 +304,12 @@
     const size_t sst_nb = BITS2BYTES(_size) * sst;                             \
     size_t ti = 0, si = 0;                                                     \
     size_t i;                                                                  \
+    int nb = BITS2BYTES(_size) * bsize;                                        \
                                                                                \
     SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
-    SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
+    SHMEMU_CHECK_GREATER_EQUAL(tst, bsize);                                    \
+    SHMEMU_CHECK_GREATER_EQUAL(sst, bsize);                                    \
+    SHMEMU_CHECK_PE_ARG_RANGE(pe, 8);                                          \
     SHMEMU_CHECK_SYMMETRIC(source, 3);                                         \
                                                                                \
     logger(LOG_RMA,                                                            \
@@ -303,11 +319,13 @@
            nblocks, pe);                                                       \
                                                                                \
     for (i = 0; i < nblocks; ++i) {                                            \
-      shmem_ctx_put##_size(ctx, (void *)&((char *)target)[ti],                 \
-                           (void *)&((char *)source)[si], bsize, pe);          \
+      SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_put_nbi(ctx,                           \
+            (void *)&((char *)target)[ti], (void *)&((char *)source)[si], nb,  \
+            pe));                                                              \
       ti += tst_nb;                                                            \
       si += sst_nb;                                                            \
     }                                                                          \
+    SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_quiet(ctx));                             \
   }
 
 /**
@@ -322,6 +340,7 @@
     const size_t sst_nb = BITS2BYTES(_size) * sst;                             \
     size_t ti = 0, si = 0;                                                     \
     size_t i;                                                                  \
+    int nb = BITS2BYTES(_size);                                                \
                                                                                \
     SHMEMU_CHECK_INIT();                                                       \
     SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
@@ -334,11 +353,13 @@
            pe);                                                                \
                                                                                \
     for (i = 0; i < nelems; ++i) {                                             \
-      shmem_ctx_get##_size(ctx, (void *)&((char *)target)[ti],                 \
-                           (void *)&((char *)source)[si], 1, pe);              \
+      SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_get_nbi(ctx,                           \
+            (void *)&((char *)target)[ti], (void *)&((char *)source)[si],      \
+            nb, pe));                                                          \
       ti += tst_nb;                                                            \
       si += sst_nb;                                                            \
     }                                                                          \
+    SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_quiet(ctx));                             \
   }
 
 /**
@@ -355,11 +376,12 @@
     const size_t sst_nb = BITS2BYTES(_size) * sst;                             \
     size_t ti = 0, si = 0;                                                     \
     size_t i;                                                                  \
+    int nb = BITS2BYTES(_size) * bsize;                                        \
                                                                                \
     SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
-    SHMEMU_CHECK_PE_ARG_RANGE(pe, 7);                                          \
+    SHMEMU_CHECK_GREATER_EQUAL(tst, bsize);                                    \
+    SHMEMU_CHECK_GREATER_EQUAL(sst, bsize);                                    \
+    SHMEMU_CHECK_PE_ARG_RANGE(pe, 8);                                          \
     SHMEMU_CHECK_SYMMETRIC(source, 3);                                         \
                                                                                \
     logger(LOG_RMA,                                                            \
@@ -369,11 +391,13 @@
            nblocks, pe);                                                       \
                                                                                \
     for (i = 0; i < nblocks; ++i) {                                            \
-      shmem_ctx_get##_size(ctx, (void *)&((char *)target)[ti],                 \
-                           (void *)&((char *)source)[si], bsize, pe);          \
+      SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_get_nbi(ctx,                           \
+            (void *)&((char *)target)[ti], (void *)&((char *)source)[si], nb,  \
+            pe));                                                              \
       ti += tst_nb;                                                            \
       si += sst_nb;                                                            \
     }                                                                          \
+    SHMEMT_MUTEX_NOPROTECT(shmemc_ctx_quiet(ctx));                             \
   }
 
 /**
@@ -564,8 +588,8 @@
                             ptrdiff_t sst, size_t bsize, size_t nblocks,       \
                             int pe) {                                          \
     SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
+    SHMEMU_CHECK_GREATER_EQUAL(tst, bsize);                                    \
+    SHMEMU_CHECK_GREATER_EQUAL(sst, bsize);                                    \
     SHMEMU_CHECK_PE_ARG_RANGE(pe, 6);                                          \
     SHMEMU_CHECK_SYMMETRIC(src, 1);                                            \
                                                                                \
@@ -608,8 +632,8 @@
                             ptrdiff_t sst, size_t bsize, size_t nblocks,       \
                             int pe) {                                          \
     SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
+    SHMEMU_CHECK_GREATER_EQUAL(tst, bsize);                                    \
+    SHMEMU_CHECK_GREATER_EQUAL(sst, bsize);                                    \
     SHMEMU_CHECK_PE_ARG_RANGE(pe, 6);                                          \
     SHMEMU_CHECK_SYMMETRIC(src, 2);                                            \
                                                                                \
@@ -648,12 +672,12 @@
   void shmem_ibput##_size(void *dest, const void *src, ptrdiff_t tst,          \
                          ptrdiff_t sst, size_t bsize, size_t nblocks, int pe) {\
     SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
+    SHMEMU_CHECK_GREATER_EQUAL(tst, bsize);                                    \
+    SHMEMU_CHECK_GREATER_EQUAL(sst, bsize);                                    \
     SHMEMU_CHECK_PE_ARG_RANGE(pe, 6);                                          \
     SHMEMU_CHECK_SYMMETRIC(dest, 1);                                           \
                                                                                \
-    shmem_ctx_ibput##_size(SHMEM_CTX_DEFAULT, dest, src, tst, sst, bsize,       \
+    shmem_ctx_ibput##_size(SHMEM_CTX_DEFAULT, dest, src, tst, sst, bsize,      \
         nblocks, pe);                                                          \
   }
 
@@ -688,8 +712,8 @@
   void shmem_ibget##_size(void *dest, const void *src, ptrdiff_t tst,          \
                          ptrdiff_t sst, size_t bsize, size_t nblocks, int pe) {\
     SHMEMU_CHECK_INIT();                                                       \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(tst, bsize);                                 \
-    SHMEMU_CHECK_COUNTING_MUTIPLE(sst, bsize);                                 \
+    SHMEMU_CHECK_GREATER_EQUAL(tst, bsize);                                    \
+    SHMEMU_CHECK_GREATER_EQUAL(sst, bsize);                                    \
     SHMEMU_CHECK_PE_ARG_RANGE(pe, 6);                                          \
     SHMEMU_CHECK_SYMMETRIC(src, 2);                                            \
                                                                                \
