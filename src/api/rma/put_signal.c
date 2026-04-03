@@ -337,6 +337,8 @@ API_DECL_PUTMEM_SIGNAL_NBI()
 #define shmem_signal_fetch pshmem_signal_fetch
 #endif /* ENABLE_PSHMEM */
 
+
+
 /**
  * @brief Atomically fetch the current signal value.
  *
@@ -350,8 +352,101 @@ API_DECL_PUTMEM_SIGNAL_NBI()
  */
 uint64_t shmem_signal_fetch(const uint64_t *sig_addr) {
   uint64_t v;
+  SHMEMU_CHECK_SYMMETRIC(sig_addr, 1);                                           \
   SHMEMT_MUTEX_NOPROTECT(
       shmemc_ctx_fetch(SHMEM_CTX_DEFAULT, (uint64_t *)sig_addr,
                        sizeof(*sig_addr), shmemc_my_pe(), &v));
   return v;
+}
+
+#ifdef ENABLE_PSHMEM
+#pragma weak shmem_signal_ctx_set = pshmem_signal_ctx_set
+#define shmem_signal_ctx_set pshmem_signal_ctx_set
+#pragma weak shmem_signal_set = pshmem_signal_set
+#define shmem_signal_set pshmem_signal_set
+#endif /* ENABLE_PSHMEM */
+
+/**
+ * @brief Atomically sets the given signal value.
+ *
+ * This routine atomically sets the value stored at the signaling address.
+ *
+ * @param ctx context handle of the operation
+ * @param sig_addr Pointer to the signal variable.
+ * @param signal value to be set for signal
+ * @param pe processing element on which to set signal
+ */
+void shmem_ctx_signal_set(shmem_ctx_t ctx, const uint64_t *sig_addr,
+      uint64_t signal, int pe) {
+  SHMEMU_CHECK_PE_ARG_RANGE(pe, 4);
+  SHMEMU_CHECK_SYMMETRIC(sig_addr, 2);
+
+  SHMEMT_MUTEX_NOPROTECT(
+      shmemc_ctx_set(ctx, sig_addr, sizeof(*sig_addr), &signal, sizeof(signal),
+                   pe));
+}
+
+/**
+ * @brief Atomically sets the given signal value.
+ *
+ * This routine atomically sets the value stored at the signaling address.
+ * It uses the default SHMEM context.
+ *
+ * @param sig_addr Pointer to the signal variable.
+ * @param signal value to be set for signal
+ * @param pe processing element on which to set signal
+ */
+void shmem_signal_set(const uint64_t *sig_addr,
+      uint64_t signal, int pe) {
+  SHMEMU_CHECK_PE_ARG_RANGE(pe, 3);
+  SHMEMU_CHECK_SYMMETRIC(sig_addr, 1);
+
+  SHMEMT_MUTEX_NOPROTECT(
+      shmemc_ctx_set(SHMEM_CTX_DEFAULT, sig_addr, sizeof(*sig_addr), &signal, sizeof(signal),
+                   pe));
+}
+
+#ifdef ENABLE_PSHMEM
+#pragma weak shmem_signal_ctx_add = pshmem_signal_ctx_add
+#define shmem_signal_ctx_add pshmem_signal_ctx_add
+#pragma weak shmem_signal_add = pshmem_signal_add
+#define shmem_signal_add pshmem_signal_add
+#endif /* ENABLE_PSHMEM */
+
+/**
+ * @brief Atomically adds the given signal value.
+ *
+ * This routine atomically adds to the signal at sig_addr
+ *
+ * @param ctx context handle of the operation
+ * @param sig_addr Pointer to the signal variable.
+ * @param signal value to be add for signal
+ * @param pe processing element on which to add signal
+ */
+void shmem_ctx_signal_add(shmem_ctx_t ctx, const uint64_t *sig_addr,
+      uint64_t signal, int pe) {
+  SHMEMU_CHECK_PE_ARG_RANGE(pe, 4);
+  SHMEMU_CHECK_SYMMETRIC(sig_addr, 2);
+
+  SHMEMT_MUTEX_NOPROTECT(
+    shmemc_ctx_add(ctx, sig_addr, &signal, sizeof(signal), pe));
+}
+
+/**
+ * @brief Atomically adds the given signal value.
+ *
+ * This routine atomically adds to the signal at sig_addr
+ * This operation happpens on the Default Context
+ *
+ * @param sig_addr Pointer to the signal variable.
+ * @param signal value to be add for signal
+ * @param pe processing element on which to add signal
+ */
+void shmem_signal_add(const uint64_t *sig_addr,
+      uint64_t signal, int pe) {
+  SHMEMU_CHECK_PE_ARG_RANGE(pe, 3);
+  SHMEMU_CHECK_SYMMETRIC(sig_addr, 1);
+
+  SHMEMT_MUTEX_NOPROTECT(
+    shmemc_ctx_add(SHMEM_CTX_DEFAULT, sig_addr, &signal, sizeof(signal), pe));
 }

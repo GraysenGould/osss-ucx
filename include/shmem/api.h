@@ -1020,6 +1020,109 @@ API_DECL_PUTMEM_SIGNAL()
  */
 uint64_t shmem_signal_fetch(const uint64_t *sig_addr);
 
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief sets value of the signal object.
+ * @page shmem_ctx_signal_set
+ * @section Synopsis
+ *
+ * @subsection c C/C++
+ @code
+ void shmem_ctx_signal_set(shmem_ctx_t ctx, const uint64_t *sig_addr,
+      uint64_t signal, int pe) {
+ @endcode
+ *
+ * @param[in] ctx Context on which to execute operation
+ * @param[in] sig_addr The address of the remotely accessible signal object
+ * @param[in] signal New value for signal
+ * @param[in] pe Processing element to set signal
+ *
+ * @section Effect
+ * None.
+ *
+ * @section Return
+ * None.
+ *
+ */
+void shmem_ctx_signal_set(shmem_ctx_t ctx, const uint64_t *sig_addr,
+      uint64_t signal, int pe);
+  
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief sets value of the signal object.
+ * @page shmem_signal_set
+ * @section Synopsis
+ *
+ * @subsection c C/C++
+ @code
+ void shmem_signal_set(const uint64_t *sig_addr, uint64_t signal, int pe);
+ @endcode
+ *
+ * @param[in] sig_addr The address of the remotely accessible signal object
+ * @param[in] signal New value for signal
+ * @param[in] pe Processing element to set signal
+ *
+ * @section Effect
+ * None.
+ *
+ * @section Return
+ * None.
+ *
+ */
+void shmem_signal_set(const uint64_t *sig_addr, uint64_t signal, int pe);
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief adds value to the signal object.
+ * @page shmem_ctx_signal_add
+ * @section Synopsis
+ *
+ * @subsection c C/C++
+ @code
+ void shmem_ctx_signal_add(shmem_ctx_t ctx, const uint64_t *sig_addr,
+      uint64_t signal, int pe) {
+ @endcode
+ *
+ * @param[in] ctx Context on which to execute operation
+ * @param[in] sig_addr The address of the remotely accessible signal object
+ * @param[in] signal Value to add to signal
+ * @param[in] pe Processing element to add to
+ *
+ * @section Effect
+ * None.
+ *
+ * @section Return
+ * None.
+ *
+ */
+void shmem_ctx_signal_add(shmem_ctx_t ctx, const uint64_t *sig_addr,
+      uint64_t signal, int pe);
+  
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * @brief adds value of the signal object.
+ * @page shmem_signal_add
+ * @section Synopsis
+ *
+ * @subsection c C/C++
+ @code
+ void shmem_signal_add(const uint64_t *sig_addr, uint64_t signal, int pe);
+ @endcode
+ *
+ * @param[in] sig_addr The address of the remotely accessible signal object
+ * @param[in] signal New value for signal
+ * @param[in] pe Processing element to add signal
+ *
+ * @section Effect
+ * None.
+ *
+ * @section Return
+ * None.
+ *
+ */
+void shmem_signal_add(const uint64_t *sig_addr, uint64_t signal, int pe);
+
 ////////////////////////////////////////////////////////////////////////////////
 /**
  * @brief waits for signal object to change value

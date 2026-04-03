@@ -38,3 +38,4 @@
 # CLion
 **/.idea
 **/cmake-build-debug
+.clangd

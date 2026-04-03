@@ -99,3 +99,5 @@ config.h
 Makefile.in
 config.h.in
 
+.clangd
+

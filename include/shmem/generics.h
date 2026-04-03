@@ -933,6 +933,12 @@ inline static void shmem_generics_nomatch(void *dummy, ...) {}
           SHMEM_SYNC_GENERIC_CASE_test_some_vector) default: shmem_generics_nomatch)( \
       __VA_ARGS__)
 
+#define shmem_signal_set(...)                                                         \
+  _Generic(                                                                           \
+      SHC11_TYPE_EVAL_PTR(SHC11_GET_ARG1(__VA_ARGS__)),                               \
+      shmem_ctx_t: shmem_ctx_signal_set,                                              \
+      default: shmem_signal_set)(__VA_ARGS__)
+
 #endif /* SHMEM_HAS_C11 */
 
 #endif /* ! _SHMEM_API_GENERICS_H */
