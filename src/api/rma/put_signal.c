@@ -376,7 +376,7 @@ uint64_t shmem_signal_fetch(const uint64_t *sig_addr) {
  * @param signal value to be set for signal
  * @param pe processing element on which to set signal
  */
-void shmem_ctx_signal_set(shmem_ctx_t ctx, const uint64_t *sig_addr,
+void shmem_ctx_signal_set(shmem_ctx_t ctx, uint64_t *sig_addr,
       uint64_t signal, int pe) {
   SHMEMU_CHECK_PE_ARG_RANGE(pe, 4);
   SHMEMU_CHECK_SYMMETRIC(sig_addr, 2);
@@ -396,8 +396,8 @@ void shmem_ctx_signal_set(shmem_ctx_t ctx, const uint64_t *sig_addr,
  * @param signal value to be set for signal
  * @param pe processing element on which to set signal
  */
-void shmem_signal_set(const uint64_t *sig_addr,
-      uint64_t signal, int pe) {
+void shmem_signal_set(uint64_t *sig_addr, uint64_t signal, 
+    int pe) {
   SHMEMU_CHECK_PE_ARG_RANGE(pe, 3);
   SHMEMU_CHECK_SYMMETRIC(sig_addr, 1);
 
@@ -423,7 +423,7 @@ void shmem_signal_set(const uint64_t *sig_addr,
  * @param signal value to be add for signal
  * @param pe processing element on which to add signal
  */
-void shmem_ctx_signal_add(shmem_ctx_t ctx, const uint64_t *sig_addr,
+void shmem_ctx_signal_add(shmem_ctx_t ctx, uint64_t *sig_addr,
       uint64_t signal, int pe) {
   SHMEMU_CHECK_PE_ARG_RANGE(pe, 4);
   SHMEMU_CHECK_SYMMETRIC(sig_addr, 2);
@@ -442,8 +442,8 @@ void shmem_ctx_signal_add(shmem_ctx_t ctx, const uint64_t *sig_addr,
  * @param signal value to be add for signal
  * @param pe processing element on which to add signal
  */
-void shmem_signal_add(const uint64_t *sig_addr,
-      uint64_t signal, int pe) {
+void shmem_signal_add(uint64_t *sig_addr, uint64_t signal, 
+    int pe) {
   SHMEMU_CHECK_PE_ARG_RANGE(pe, 3);
   SHMEMU_CHECK_SYMMETRIC(sig_addr, 1);
 
