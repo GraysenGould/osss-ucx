@@ -16,6 +16,6 @@
 #include <shcoll/collect.h>
 #include <shcoll/fcollect.h>
 #include <shcoll/reduce.h>
-#include <shcoll/inscan.h>
+#include <shcoll/scan.h>
 
 #endif /* ! _SHCOLL_H */

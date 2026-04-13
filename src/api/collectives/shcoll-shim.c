@@ -133,6 +133,7 @@ void collectives_init(void) {
   TRY(prod_reduce);
 
   TRY(inscan);
+  TRY(exscan);
 }
 
 /**
@@ -1379,7 +1380,6 @@ SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_PROD_REDUCE)
  */
 
 #ifdef ENABLE_PSHMEM
-/* sum */
 #pragma weak shmem_char_inscan = pshmem_char_inscan
 #define shmem_char_inscan pshmem_char_inscan
 #pragma weak shmem_schar_inscan = pshmem_schar_inscan
@@ -1452,6 +1452,81 @@ SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_PROD_REDUCE)
   SHMEM_TYPENAME_INSCAN(_type, _typename)
 SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_INSCAN)
 #undef DECL_SHIM_INSCAN
+
+#ifdef ENABLE_PSHMEM
+#pragma weak shmem_char_exscan = pshmem_char_exscan
+#define shmem_char_exscan pshmem_char_exscan
+#pragma weak shmem_schar_exscan = pshmem_schar_exscan
+#define shmem_schar_exscan pshmem_schar_exscan
+#pragma weak shmem_short_exscan = pshmem_short_exscan
+#define shmem_short_exscan pshmem_short_exscan
+#pragma weak shmem_int_exscan = pshmem_int_exscan
+#define shmem_int_exscan pshmem_int_exscan
+#pragma weak shmem_long_exscan = pshmem_long_exscan
+#define shmem_long_exscan pshmem_long_exscan
+#pragma weak shmem_longlong_exscan = pshmem_longlong_exscan
+#define shmem_longlong_exscan pshmem_longlong_exscan
+#pragma weak shmem_ptrdiff_exscan = pshmem_ptrdiff_exscan
+#define shmem_ptrdiff_exscan pshmem_ptrdiff_exscan
+#pragma weak shmem_uchar_exscan = pshmem_uchar_exscan
+#define shmem_uchar_exscan pshmem_uchar_exscan
+#pragma weak shmem_ushort_exscan = pshmem_ushort_exscan
+#define shmem_ushort_exscan pshmem_ushort_exscan
+#pragma weak shmem_uint_exscan = pshmem_uint_exscan
+#define shmem_uint_exscan pshmem_uint_exscan
+#pragma weak shmem_ulong_exscan = pshmem_ulong_exscan
+#define shmem_ulong_exscan pshmem_ulong_exscan
+#pragma weak shmem_ulonglong_exscan = pshmem_ulonglong_exscan
+#define shmem_ulonglong_exscan pshmem_ulonglong_exscan
+#pragma weak shmem_int8_exscan = pshmem_int8_exscan
+#define shmem_int8_exscan pshmem_int8_exscan
+#pragma weak shmem_int16_exscan = pshmem_int16_exscan
+#define shmem_int16_exscan pshmem_int16_exscan
+#pragma weak shmem_int32_exscan = pshmem_int32_exscan
+#define shmem_int32_exscan pshmem_int32_exscan
+#pragma weak shmem_int64_exscan = pshmem_int64_exscan
+#define shmem_int64_exscan pshmem_int64_exscan
+#pragma weak shmem_uint8_exscan = pshmem_uint8_exscan
+#define shmem_uint8_exscan pshmem_uint8_exscan
+#pragma weak shmem_uint16_exscan = pshmem_uint16_exscan
+#define shmem_uint16_exscan pshmem_uint16_exscan
+#pragma weak shmem_uint32_exscan = pshmem_uint32_exscan
+#define shmem_uint32_exscan pshmem_uint32_exscan
+#pragma weak shmem_uint64_exscan = pshmem_uint64_exscan
+#define shmem_uint64_exscan pshmem_uint64_exscan
+#pragma weak shmem_size_exscan = pshmem_size_exscan
+#define shmem_size_exscan pshmem_size_exscan
+#pragma weak shmem_float_exscan = pshmem_float_exscan
+#define shmem_float_exscan pshmem_float_exscan
+#pragma weak shmem_double_exscan = pshmem_double_exscan
+#define shmem_double_exscan pshmem_double_exscan
+#pragma weak shmem_longdouble_exscan = pshmem_longdouble_exscan
+#define shmem_longdouble_exscan pshmem_longdouble_exscan
+#pragma weak shmem_complexd_exscan = pshmem_complexd_exscan
+#define shmem_complexd_exscan pshmem_complexd_exscan
+#pragma weak shmem_complexf_exscan = pshmem_complexf_exscan
+#define shmem_complexf_exscan pshmem_complexf_exscan
+#endif /* ENABLE_PSHMEM */
+
+/**
+ * @brief Declares a exscan operation for a given type
+ *
+ * @param _typename The type name
+ * @param _type The type
+ */
+#define SHMEM_TYPENAME_EXSCAN(_typename, _type)                                \
+  int shmem_##_typename##_exscan(                                              \
+      shmem_team_t team, _type *dest, const _type *source, size_t nelems) {    \
+    logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest,       \
+           source, nelems);                                                    \
+    TYPED_CALL(exscan, #_typename, team, dest, source, nelems);                \
+  }
+
+#define DECL_SHIM_EXSCAN(_typename, _type)                                     \
+  SHMEM_TYPENAME_EXSCAN(_type, _typename)
+SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_EXSCAN)
+#undef DECL_SHIM_EXSCAN
+
 /** @} */
 
 /** @} */

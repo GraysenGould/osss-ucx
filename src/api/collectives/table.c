@@ -123,6 +123,14 @@
 #define TYPED_INSCAN_REG(_algo, _typename)                                \
   {#_algo, #_typename, shcoll_##_typename##_inscan_##_algo}
 
+/*
+ * @brief Macro to register a typed exscan collective 
+ * @param _algo The algorithm implementation name
+ * @param _typename The data type name
+ */
+#define TYPED_EXSCAN_REG(_algo, _typename)                                \
+  {#_algo, #_typename, shcoll_##_typename##_exscan_##_algo}
+
 /******************************************************** */
 /**
  * @brief Table of alltoall collective algorithms for all types
@@ -551,6 +559,16 @@ static typed_op_t inscan_tab[] = {
 #undef INSCAN_REG
 
 /**
+ * @brief Table of exscan collective algorithms
+ */
+#define EXSCAN_REG(_type, _typename)                                      \
+  TYPED_EXSCAN_REG(linear, _typename),
+
+static typed_op_t exscan_tab[] = {
+    SHMEM_REDUCE_ARITH_TYPE_TABLE(EXSCAN_REG) TYPED_LAST};
+#undef EXSCAN_REG
+
+/**
  * @brief Table of barrier_all collective algorithms
  */
 static unsized_op_t barrier_all_tab[] = {
@@ -844,6 +862,7 @@ REGISTER_TYPED(sum_reduce)
 REGISTER_TYPED(prod_reduce)
 
 REGISTER_TYPED(inscan)
+REGISTER_TYPED(exscan)
 
 REGISTER_UNSIZED(barrier_all)
 REGISTER_UNSIZED(sync)

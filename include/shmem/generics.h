@@ -456,6 +456,16 @@ inline static void shmem_generics_nomatch(void *dummy, ...) {}
           SHMEM_INSCAN_GENERIC_CASE) default: shmem_generics_nomatch)(         \
       __VA_ARGS__)
 
+#define SHMEM_EXSCAN_GENERIC_CASE(type, typename)                              \
+  type * : shmem_##typename##_exscan,
+
+#define shmem_exscan(...)                                                      \
+  _Generic(                                                                    \
+      SHC11_TYPE_EVAL_PTR(SHC11_GET_ARG2(__VA_ARGS__)),                        \
+      C11_SHMEM_REDUCE_ARITH_TYPE_TABLE(                                       \
+          SHMEM_EXSCAN_GENERIC_CASE) default: shmem_generics_nomatch)(         \
+      __VA_ARGS__)
+
 
 /********************************************************************************
  *
