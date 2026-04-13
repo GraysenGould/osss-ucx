@@ -115,6 +115,14 @@
 #define TYPED_REDUCE_REG(_op, _algo, _typename)                                \
   {#_algo, #_typename, shcoll_##_typename##_##_op##_reduce_##_algo}
 
+/*
+ * @brief Macro to register a typed inscan collective 
+ * @param _algo The algorithm implementation name
+ * @param _typename The data type name
+ */
+#define TYPED_INSCAN_REG(_algo, _typename)                                \
+  {#_algo, #_typename, shcoll_##_typename##_inscan_##_algo}
+
 /******************************************************** */
 /**
  * @brief Table of alltoall collective algorithms for all types
@@ -533,6 +541,16 @@ static typed_op_t prod_reduce_tab[] = {
 #undef PROD_REDUCE_REG
 
 /**
+ * @brief Table of inscan collective algorithms
+ */
+#define INSCAN_REG(_type, _typename)                                      \
+  TYPED_INSCAN_REG(linear, _typename),
+
+static typed_op_t inscan_tab[] = {
+    SHMEM_REDUCE_ARITH_TYPE_TABLE(INSCAN_REG) TYPED_LAST};
+#undef INSCAN_REG
+
+/**
  * @brief Table of barrier_all collective algorithms
  */
 static unsized_op_t barrier_all_tab[] = {
@@ -824,6 +842,8 @@ REGISTER_TYPED(max_reduce)
 REGISTER_TYPED(min_reduce)
 REGISTER_TYPED(sum_reduce)
 REGISTER_TYPED(prod_reduce)
+
+REGISTER_TYPED(inscan)
 
 REGISTER_UNSIZED(barrier_all)
 REGISTER_UNSIZED(sync)

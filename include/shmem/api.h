@@ -3308,6 +3308,35 @@ SHMEM_TO_ALL_MINMAX_TYPE_TABLE(DECL_MIN_TO_ALL)
 #undef API_TO_ALL_TYPE
 
 ////////////////////////////////////////////////////////////////////////////////
+/*
+ * @brief Performs an inclusive scan operation
+ *
+ * @section Synopsis
+ *
+ * @subsection c C/C++
+ @code
+ int shmem_<typename>_inscan(shmem_team_t team, _type *dest, const _type
+ *source, size_t nelems);
+ @endcode
+ *
+ * @param[in] team    Team on which to perform the inscan
+ * @param[out] dest   Output array on all PEs in the team
+ * @param[in] source  Input array on all PEs in the team
+ * @param[in] nelems Number of elements in the input/output arrays
+ *
+ * @return Zero on success, non-zero otherwise
+ */
+#define API_INSCAN_TYPE(_type, _typename)                                   \
+  int shmem_##_typename##_inscan(shmem_team_t team, _type *dest,            \
+                                      const _type *source, size_t nelems);
+
+#define DECL_INSCAN(_type, _typename)                                       \
+  API_INSCAN_TYPE(_type, _typename)
+SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_INSCAN)
+#undef DECL_INSCAN
+#undef API_INSCAN_TYPE
+
+////////////////////////////////////////////////////////////////////////////////
 /**
  * broadcasts
  *

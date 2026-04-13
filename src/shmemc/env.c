@@ -183,6 +183,9 @@ void shmemc_env_init(void) {
   proc.env.coll.sum_reduce = NULL;
   proc.env.coll.prod_reduce = NULL;
 
+  proc.env.coll.inscan = NULL;
+  proc.env.coll.exscan = NULL;
+
   /* Initialize from environment variables with defaults */
   CHECK_ENV(e, BARRIER_ALGO);
   proc.env.coll.barrier = strdup((e != NULL) ? e : COLLECTIVES_DEFAULT_BARRIER);
@@ -311,6 +314,14 @@ void shmemc_env_init(void) {
   proc.env.coll.prod_reduce =
       strdup((e != NULL) ? e : COLLECTIVES_DEFAULT_PROD_REDUCE);
 
+  CHECK_ENV(e, INSCAN_ALGO);
+  proc.env.coll.inscan =
+      strdup((e != NULL) ? e : COLLECTIVES_DEFAULT_INSCAN);
+
+  CHECK_ENV(e, EXSCAN_ALGO);
+  proc.env.coll.exscan =
+      strdup((e != NULL) ? e : COLLECTIVES_DEFAULT_EXSCAN);
+
   proc.env.progress_threads = NULL;
 
   CHECK_ENV(e, PROGRESS_THREADS);
@@ -407,6 +418,9 @@ void shmemc_env_finalize(void) {
   free(proc.env.coll.min_reduce);
   free(proc.env.coll.sum_reduce);
   free(proc.env.coll.prod_reduce);
+
+  free(proc.env.coll.inscan);
+  free(proc.env.coll.exscan);
 }
 
 /**
@@ -542,6 +556,9 @@ void shmemc_print_env_vars(FILE *stream, const char *prefix) {
   DESCRIBE_COLLECTIVE(min_reduce, MIN_REDUCE);
   DESCRIBE_COLLECTIVE(sum_reduce, SUM_REDUCE);
   DESCRIBE_COLLECTIVE(prod_reduce, PROD_REDUCE);
+
+  DESCRIBE_COLLECTIVE(prod_reduce, INSCAN);
+  DESCRIBE_COLLECTIVE(prod_reduce, EXSCAN);
 
   fprintf(stream, "%s%-*s %-*s %s\n", prefix, var_width,
           "SHMEM_PROGRESS_THREADS", val_width,

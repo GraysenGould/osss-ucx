@@ -131,6 +131,8 @@ void collectives_init(void) {
   TRY(min_reduce);
   TRY(sum_reduce);
   TRY(prod_reduce);
+
+  TRY(inscan);
 }
 
 /**
@@ -1368,6 +1370,89 @@ SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_SUM_REDUCE)
   SHMEM_TYPENAME_OP_REDUCE(_type, _typename, prod)
 SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_PROD_REDUCE)
 #undef DECL_SHIM_PROD_REDUCE
+
+
+///////////////////////////////////////////////////////////////////////
+/**
+ * @defgroup scan collectives 
+ * @{
+ */
+
+#ifdef ENABLE_PSHMEM
+/* sum */
+#pragma weak shmem_char_inscan = pshmem_char_inscan
+#define shmem_char_inscan pshmem_char_inscan
+#pragma weak shmem_schar_inscan = pshmem_schar_inscan
+#define shmem_schar_inscan pshmem_schar_inscan
+#pragma weak shmem_short_inscan = pshmem_short_inscan
+#define shmem_short_inscan pshmem_short_inscan
+#pragma weak shmem_int_inscan = pshmem_int_inscan
+#define shmem_int_inscan pshmem_int_inscan
+#pragma weak shmem_long_inscan = pshmem_long_inscan
+#define shmem_long_inscan pshmem_long_inscan
+#pragma weak shmem_longlong_inscan = pshmem_longlong_inscan
+#define shmem_longlong_inscan pshmem_longlong_inscan
+#pragma weak shmem_ptrdiff_inscan = pshmem_ptrdiff_inscan
+#define shmem_ptrdiff_inscan pshmem_ptrdiff_inscan
+#pragma weak shmem_uchar_inscan = pshmem_uchar_inscan
+#define shmem_uchar_inscan pshmem_uchar_inscan
+#pragma weak shmem_ushort_inscan = pshmem_ushort_inscan
+#define shmem_ushort_inscan pshmem_ushort_inscan
+#pragma weak shmem_uint_inscan = pshmem_uint_inscan
+#define shmem_uint_inscan pshmem_uint_inscan
+#pragma weak shmem_ulong_inscan = pshmem_ulong_inscan
+#define shmem_ulong_inscan pshmem_ulong_inscan
+#pragma weak shmem_ulonglong_inscan = pshmem_ulonglong_inscan
+#define shmem_ulonglong_inscan pshmem_ulonglong_inscan
+#pragma weak shmem_int8_inscan = pshmem_int8_inscan
+#define shmem_int8_inscan pshmem_int8_inscan
+#pragma weak shmem_int16_inscan = pshmem_int16_inscan
+#define shmem_int16_inscan pshmem_int16_inscan
+#pragma weak shmem_int32_inscan = pshmem_int32_inscan
+#define shmem_int32_inscan pshmem_int32_inscan
+#pragma weak shmem_int64_inscan = pshmem_int64_inscan
+#define shmem_int64_inscan pshmem_int64_inscan
+#pragma weak shmem_uint8_inscan = pshmem_uint8_inscan
+#define shmem_uint8_inscan pshmem_uint8_inscan
+#pragma weak shmem_uint16_inscan = pshmem_uint16_inscan
+#define shmem_uint16_inscan pshmem_uint16_inscan
+#pragma weak shmem_uint32_inscan = pshmem_uint32_inscan
+#define shmem_uint32_inscan pshmem_uint32_inscan
+#pragma weak shmem_uint64_inscan = pshmem_uint64_inscan
+#define shmem_uint64_inscan pshmem_uint64_inscan
+#pragma weak shmem_size_inscan = pshmem_size_inscan
+#define shmem_size_inscan pshmem_size_inscan
+#pragma weak shmem_float_inscan = pshmem_float_inscan
+#define shmem_float_inscan pshmem_float_inscan
+#pragma weak shmem_double_inscan = pshmem_double_inscan
+#define shmem_double_inscan pshmem_double_inscan
+#pragma weak shmem_longdouble_inscan = pshmem_longdouble_inscan
+#define shmem_longdouble_inscan pshmem_longdouble_inscan
+#pragma weak shmem_complexd_inscan = pshmem_complexd_inscan
+#define shmem_complexd_inscan pshmem_complexd_inscan
+#pragma weak shmem_complexf_inscan = pshmem_complexf_inscan
+#define shmem_complexf_inscan pshmem_complexf_inscan
+#endif /* ENABLE_PSHMEM */
+
+/**
+ * @brief Declares a inscan operation for a given type
+ *
+ * @param _typename The type name
+ * @param _type The type
+ */
+#define SHMEM_TYPENAME_INSCAN(_typename, _type)                                \
+  int shmem_##_typename##_inscan(                                              \
+      shmem_team_t team, _type *dest, const _type *source, size_t nelems) {    \
+    logger(LOG_COLLECTIVES, "%s(%p, %p, %p, %zu)", __func__, team, dest,       \
+           source, nelems);                                                    \
+    TYPED_CALL(inscan, #_typename, team, dest, source, nelems);                \
+  }
+
+#define DECL_SHIM_INSCAN(_typename, _type)                                     \
+  SHMEM_TYPENAME_INSCAN(_type, _typename)
+SHMEM_REDUCE_ARITH_TYPE_TABLE(DECL_SHIM_INSCAN)
+#undef DECL_SHIM_INSCAN
+/** @} */
 
 /** @} */
 
