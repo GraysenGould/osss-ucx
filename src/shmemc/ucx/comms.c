@@ -238,9 +238,7 @@ void shmemc_ctx_pe_quiet(shmem_ctx_t ctx, const int *target_pes, size_t npes) {
   }
 
 #ifdef HAVE_UCP_EP_FLUSH_NBX
-  const ucp_request_param_t prm = {.op_attr_mask =
-                                       UCP_OP_ATTR_FIELD_CALLBACK,
-                                   .cb.send = noop_callbackx};
+  const ucp_request_param_t prm = {.op_attr_mask = 0};
 
   ucs_status_ptr_t *reqs = malloc(npes * sizeof(*reqs));
   shmemu_assert(reqs != NULL, MODULE ": %s() failed to allocate request array",
